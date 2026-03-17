@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vestique</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -486,12 +488,226 @@
     }
 
     @media (max-width: 768px) {
-      header { padding: 20px 24px; }
-      .categories-grid { grid-template-columns: 1fr; height: auto; }
-      .categories-grid .category-card { height: 200px; }
-      .features-section { grid-template-columns: repeat(2, 1fr); padding: 60px 24px; }
-      .footer-grid { grid-template-columns: 1fr 1fr; }
-      .categories-section { padding: 60px 24px; }
+      header { 
+        padding: 16px 20px;
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      header h2 { 
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+      }
+      
+      nav {
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      nav a {
+        font-size: 0.65rem;
+        letter-spacing: 1px;
+      }
+      
+      .hero {
+        height: auto;
+        min-height: 60vh;
+        padding: 80px 20px 40px;
+      }
+      
+      .hero-title {
+        font-size: clamp(1.8rem, 5vw, 3rem) !important;
+      }
+      
+      .hero-subtitle {
+        font-size: 0.8rem;
+        margin-bottom: 32px;
+      }
+      
+      .hero-btns {
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .btn-primary, .btn-secondary {
+        padding: 12px 24px !important;
+        font-size: 0.7rem !important;
+        width: 100%;
+        min-height: 44px;
+      }
+      
+      .categories-grid { 
+        grid-template-columns: 1fr; 
+        height: auto; 
+        gap: 16px;
+      }
+      
+      .categories-grid .category-card { 
+        height: 180px;
+        padding: 20px;
+      }
+      
+      .category-title {
+        font-size: 1.2rem !important;
+      }
+      
+      .features-section { 
+        grid-template-columns: 1fr;
+        padding: 40px 20px;
+        gap: 24px;
+      }
+      
+      .feature-card {
+        padding: 24px !important;
+      }
+      
+      .feature-card h3 {
+        font-size: 1rem !important;
+      }
+      
+      .feature-card p {
+        font-size: 0.85rem !important;
+      }
+      
+      .footer-grid { 
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      
+      .categories-section { 
+        padding: 40px 20px;
+      }
+      
+      .marquee-track {
+        gap: 30px;
+        animation: marquee 30s linear infinite;
+      }
+      
+      .marquee-track span {
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding: 12px 16px;
+      }
+
+      header h2 {
+        font-size: 0.95rem;
+        letter-spacing: 1px;
+      }
+
+      nav {
+        gap: 12px;
+      }
+
+      nav a {
+        font-size: 0.6rem;
+        letter-spacing: 0.5px;
+      }
+
+      .hero {
+        min-height: 50vh;
+        padding: 70px 16px 30px;
+      }
+
+      .hero-title {
+        font-size: clamp(1.4rem, 4vw, 2rem) !important;
+        margin-bottom: 16px;
+      }
+
+      .hero-label {
+        font-size: 0.65rem;
+        margin-bottom: 16px;
+      }
+
+      .hero-subtitle {
+        font-size: 0.75rem;
+        margin-bottom: 24px;
+      }
+
+      .hero-btns {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .btn-primary, .btn-secondary {
+        padding: 10px 20px !important;
+        font-size: 0.65rem !important;
+        min-height: 40px;
+      }
+
+      .scroll-indicator {
+        bottom: 20px;
+      }
+
+      .scroll-indicator span {
+        font-size: 0.6rem;
+      }
+
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .categories-grid .category-card {
+        height: 150px;
+        padding: 16px;
+      }
+
+      .category-title {
+        font-size: 1rem !important;
+      }
+
+      .category-subtitle {
+        font-size: 0.75rem !important;
+      }
+
+      .features-section {
+        grid-template-columns: 1fr;
+        padding: 30px 16px;
+        gap: 16px;
+      }
+
+      .feature-card {
+        padding: 16px !important;
+      }
+
+      .feature-card h3 {
+        font-size: 0.9rem !important;
+      }
+
+      .feature-card p {
+        font-size: 0.8rem !important;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .footer-col h4 {
+        font-size: 0.8rem !important;
+      }
+
+      .footer-col ul li a {
+        font-size: 0.75rem !important;
+      }
+
+      .marquee-track {
+        gap: 20px;
+      }
+
+      .marquee-track span {
+        font-size: 0.6rem;
+        letter-spacing: 1px;
+      }
+
+      .categories-section {
+        padding: 30px 16px;
+      }
     }
   </style>
 </head>
