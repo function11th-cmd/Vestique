@@ -26,7 +26,7 @@ service cloud.firestore {
       // Compatibility: signed-in users can use user_* carts; guests can use guest_* carts.
       // For strict owner-only control, migrate carts to UID-based document IDs.
       allow read, create, update, delete: if (isSignedIn() && cartId.matches('^user_.*$'))
-        || (!isSignedIn() && cartId.matches('^guest_[A-Za-z0-9]+$'));
+        || (!isSignedIn() && cartId.matches('^guest_.*$'));
     }
 
     // Orders: owner can create/read own orders, admin can manage all
