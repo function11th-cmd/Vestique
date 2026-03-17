@@ -713,9 +713,14 @@
 </head>
 <body>
 
-  <header id="main-header">
+  <header id="main-header" class="mobile-nav">
     <h2>Vestique</h2>
-    <nav>
+    <button class="hamburger" id="hamburger-btn" aria-label="Toggle navigation menu" aria-controls="main-nav" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav id="main-nav">
       <a href="index.html">Home</a>
       <a href="products.html">Products</a>
       <a href="login.html">Login</a>
@@ -724,6 +729,34 @@
       <a href="admin.html" id="admin-link" style="display:none">Admin</a>
     </nav>
   </header>
+
+  <script>
+    (function () {
+      const nav = document.getElementById("main-nav");
+      const hamburger = document.getElementById("hamburger-btn");
+      if (!nav || !hamburger) return;
+
+      function closeMenu() {
+        nav.classList.remove("open");
+        hamburger.classList.remove("open");
+        hamburger.setAttribute("aria-expanded", "false");
+      }
+
+      hamburger.addEventListener("click", function () {
+        const isOpen = nav.classList.toggle("open");
+        hamburger.classList.toggle("open", isOpen);
+        hamburger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      });
+
+      nav.querySelectorAll("a").forEach(function (link) {
+        link.addEventListener("click", closeMenu);
+      });
+
+      window.addEventListener("resize", function () {
+        if (window.innerWidth > 768) closeMenu();
+      });
+    })();
+  </script>
 
   <!-- HERO -->
   <section class="hero">
