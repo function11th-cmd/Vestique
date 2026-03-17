@@ -709,6 +709,7 @@
       <button class="filter-tab" data-filter="football"   onclick="setFilter('football')">⚽ Football</button>
       <button class="filter-tab" data-filter="basketball" onclick="setFilter('basketball')">🏀 Basketball</button>
       <button class="filter-tab" data-filter="cricket"    onclick="setFilter('cricket')">🏏 Cricket</button>
+      <button class="filter-tab" data-filter="shorts"     onclick="setFilter('shorts')">🩳 Shorts</button>
     </div>
     <span class="filter-count">Showing <strong id="product-count">0</strong> jerseys</span>
   </div>
@@ -928,6 +929,39 @@
         t.classList.toggle("active", t.dataset.filter === activeFilter));
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function escapeJsString(value) {
+      return String(value ?? "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    function sanitizeImageUrl(url, fallback = "https://placehold.co/400x400") {
+      const trimmed = String(url || "").trim();
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      return fallback;
+    }
+
+    function categoryLabel(category) {
+      const labels = {
+        football: "⚽ Football",
+        cricket: "🏏 Cricket",
+        basketball: "🏀 Basketball",
+        shorts: "🩳 Shorts"
+      };
+      return labels[String(category || "").toLowerCase()] || "";
+    }
+
     /* ─── Realtime products ─────────────────────────────────────── */
     onSnapshot(collection(db, "products"), (snapshot) => {
       products = [];
@@ -959,7 +993,7 @@
 
       if (filtered.length === 0) {
         noResults.style.display = "block";
-        const emojis = { football: "⚽", basketball: "🏀", cricket: "🏏" };
+        const emojis = { football: "⚽", basketball: "🏀", cricket: "🏏", shorts: "🩳" };
         document.getElementById("no-results-emoji").textContent = emojis[activeFilter] || "🔍";
         document.getElementById("no-results-title").textContent = "No " + activeFilter + " jerseys yet";
         document.getElementById("no-results-msg").textContent   = "Check back soon — more jerseys dropping!";
@@ -968,31 +1002,40 @@
       noResults.style.display = "none";
 
       filtered.forEach((product, index) => {
+        const safeId = String(product.id || "");
+        const safeIdForJs = escapeJsString(safeId);
+        const safeName = escapeHtml(product.name || "Untitled Product");
+        const safeDesc = product.desc ? escapeHtml(product.desc) : "";
+        const safeCategory = escapeHtml(categoryLabel(product.category));
+        const safeStock = Number(product.stock) > 0 ? Number(product.stock) : 0;
+        const safePrice = Number(product.price) || 0;
+        const safeImage = sanitizeImageUrl(product.image, "https://placehold.co/400x400");
+
         const card = document.createElement("div");
         card.className = "product-card";
         card.style.animationDelay = (index * 0.08) + "s";
-        const isOutOfStock = !product.stock || product.stock <= 0;
+        const isOutOfStock = safeStock <= 0;
         const stockBadge = isOutOfStock ? '<div style="position:absolute;top:10px;right:10px;background:#c0392b;color:white;padding:6px 12px;font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;border-radius:3px;font-weight:500;">Out of Stock</div>' : '';
         
         card.innerHTML = `
           <div style="position:relative;overflow:hidden;">
-            <img class="product-card-img" src="${product.image}" alt="${product.name}"
+            <img class="product-card-img" src="${safeImage}" alt="${safeName}"
               onerror="this.src='https://placehold.co/400x400'">
             ${stockBadge}
             <div class="product-card-overlay">
-              <button class="quick-view-btn" onclick="openModal('${product.id}')">Quick View</button>
+              <button class="quick-view-btn" onclick="openModal('${safeIdForJs}')">Quick View</button>
             </div>
           </div>
           <div class="product-card-info">
-            <h3>${product.name}</h3>
-            ${product.desc ? `<p class="desc">${product.desc}</p>` : ""}
+            <h3>${safeName}</h3>
+            ${safeDesc ? `<p class="desc">${safeDesc}</p>` : ""}
             <p class="desc" style="color: #6b6b6b; font-size:0.75rem; margin:6px 0; letter-spacing:1px; text-transform:uppercase;">
-              ${product.category ? (product.category === 'football' ? '⚽ Football' : product.category === 'cricket' ? '🏏 Cricket' : product.category === 'basketball' ? '🏀 Basketball' : '') : ''}
+              ${safeCategory}
             </p>
-            <p class="desc" style="color: ${isOutOfStock ? '#c0392b' : '#2d7a2d'}; font-size:0.8rem; margin:6px 0;">Stock: ${product.stock || 0}</p>
+            <p class="desc" style="color: ${isOutOfStock ? '#c0392b' : '#2d7a2d'}; font-size:0.8rem; margin:6px 0;">Stock: ${safeStock}</p>
             <div class="product-card-bottom">
-              <span class="product-price">₹${Number(product.price).toLocaleString("en-IN")}</span>
-              <button class="add-btn" onclick="openModal('${product.id}')" title="Add to Cart" ${isOutOfStock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>+</button>
+              <span class="product-price">₹${safePrice.toLocaleString("en-IN")}</span>
+              <button class="add-btn" onclick="openModal('${safeIdForJs}')" title="Add to Cart" ${isOutOfStock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>+</button>
             </div>
           </div>
         `;
@@ -1008,13 +1051,13 @@
 
       const isOutOfStock = !currentProduct.stock || currentProduct.stock <= 0;
 
-      document.getElementById("modal-img").src               = currentProduct.image;
+      document.getElementById("modal-img").src               = sanitizeImageUrl(currentProduct.image, "https://placehold.co/400x400");
       document.getElementById("modal-title").textContent     = currentProduct.name;
       document.getElementById("modal-price").textContent     = "₹" + Number(currentProduct.price).toLocaleString("en-IN");
       document.getElementById("modal-desc").textContent      = currentProduct.desc || "Premium quality streetwear. Made for everyday style and comfort.";
       
       // Display category with emoji
-      const categoryEmojis = { football: '⚽ Football', cricket: '🏏 Cricket', basketball: '🏀 Basketball' };
+      const categoryEmojis = { football: '⚽ Football', cricket: '🏏 Cricket', basketball: '🏀 Basketball', shorts: '🩳 Shorts' };
       document.getElementById("modal-category").textContent = categoryEmojis[currentProduct.category] || '';
       
       document.getElementById("modal-stock").textContent     = `Stock: ${currentProduct.stock || 0}${isOutOfStock ? ' - Out of Stock' : ' Available'}`;
@@ -1026,7 +1069,7 @@
       addBtn.disabled      = isOutOfStock;
 
       const toggle = document.getElementById("img-toggle");
-      if (currentProduct.imageBack) {
+      if (sanitizeImageUrl(currentProduct.imageBack, "") !== "") {
         toggle.style.display = "flex";
         document.querySelectorAll(".img-toggle-btn").forEach(b => b.classList.remove("active"));
         document.querySelectorAll(".img-toggle-btn")[0].classList.add("active");
@@ -1045,7 +1088,10 @@
       img.style.opacity = "0";
       img.style.transition = "opacity 0.3s";
       setTimeout(() => {
-        img.src = side === "front" ? currentProduct.image : currentProduct.imageBack;
+        const fallback = "https://placehold.co/400x400";
+        img.src = side === "front"
+          ? sanitizeImageUrl(currentProduct.image, fallback)
+          : sanitizeImageUrl(currentProduct.imageBack, fallback);
         img.style.opacity = "1";
       }, 300);
       document.querySelectorAll(".img-toggle-btn").forEach(b => b.classList.remove("active"));

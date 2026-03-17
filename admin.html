@@ -172,6 +172,7 @@
             <option value="football">⚽ Football</option>
             <option value="cricket">🏏 Cricket</option>
             <option value="basketball">🏀 Basketball</option>
+            <option value="shorts">🩳 Shorts</option>
           </select>
         </div>
         <div class="form-group">
@@ -571,40 +572,72 @@
         allOrders.sort((a, b) => b.createdAt - a.createdAt);
 
         allOrders.forEach(order => {
+          const safeOrderId = escapeHtml(order.id || '—');
+          const safeDate = escapeHtml(order.date || '—');
+          const safeEmail = escapeHtml(order.email || '—');
+          const safePhone = escapeHtml(order.phone || '—');
+          const safeAddress = escapeHtml(order.address || '—');
+          const safeItems = Array.isArray(order.items)
+            ? escapeHtml(order.items.map(i => `${i.name || 'Item'} x${Number(i.qty) || 1}`).join(', '))
+            : '—';
+          const safeTotal = Number(order.total) || 0;
+          const safeStatus = ['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'].includes(order.status)
+            ? order.status
+            : 'Processing';
+          const safeStatusLabel = escapeHtml(safeStatus);
+          const safeFirestoreId = escapeJsString(order.firestoreId || '');
+
           const div = document.createElement('div');
           div.style.cssText = 'background:#fafafa; padding:24px 30px; margin-bottom:16px; display:grid; grid-template-columns:1fr auto; gap:20px; align-items:start;';
           div.innerHTML = `
             <div>
               <p style="font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; color:#6b6b6b; margin-bottom:6px;">
-                Order #${order.id} — ${order.date}
+                Order #${safeOrderId} — ${safeDate}
               </p>
               <p style="font-family:'Playfair Display',serif; font-size:1rem; margin-bottom:4px;">
-                ${order.items.map(i => i.name + ' x' + i.qty).join(', ')}
+                ${safeItems}
               </p>
-              <p style="color:#c8a97e; font-weight:500; margin-bottom:4px;">₹${order.total.toLocaleString('en-IN')}</p>
-              <p style="font-size:0.82rem; color:#6b6b6b;">📧 ${order.email}</p>
-              <p style="font-size:0.82rem; color:#6b6b6b;">📞 ${order.phone || '—'}</p>
-              <p style="font-size:0.82rem; color:#6b6b6b;">📍 ${order.address}</p>
+              <p style="color:#c8a97e; font-weight:500; margin-bottom:4px;">₹${safeTotal.toLocaleString('en-IN')}</p>
+              <p style="font-size:0.82rem; color:#6b6b6b;">📧 ${safeEmail}</p>
+              <p style="font-size:0.82rem; color:#6b6b6b;">📞 ${safePhone}</p>
+              <p style="font-size:0.82rem; color:#6b6b6b;">📍 ${safeAddress}</p>
             </div>
             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:12px;">
-              <select onchange="updateOrderStatus('${order.firestoreId}', this.value)"
+              <select onchange="updateOrderStatus('${safeFirestoreId}', this.value)"
                 style="padding:10px 16px; border:1px solid #e8e4e0; background:white;
                        font-family:'DM Sans',sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">
-                <option value="Processing" ${order.status==='Processing'?'selected':''}>Processing</option>
-                <option value="Confirmed"  ${order.status==='Confirmed' ?'selected':''}>Confirmed</option>
-                <option value="Shipped"    ${order.status==='Shipped'   ?'selected':''}>Shipped</option>
-                <option value="Delivered"  ${order.status==='Delivered' ?'selected':''}>Delivered</option>
-                <option value="Cancelled"  ${order.status==='Cancelled' ?'selected':''}>Cancelled</option>
+                <option value="Processing" ${safeStatus==='Processing'?'selected':''}>Processing</option>
+                <option value="Confirmed"  ${safeStatus==='Confirmed' ?'selected':''}>Confirmed</option>
+                <option value="Shipped"    ${safeStatus==='Shipped'   ?'selected':''}>Shipped</option>
+                <option value="Delivered"  ${safeStatus==='Delivered' ?'selected':''}>Delivered</option>
+                <option value="Cancelled"  ${safeStatus==='Cancelled' ?'selected':''}>Cancelled</option>
               </select>
               <span style="font-size:0.7rem; letter-spacing:2px; text-transform:uppercase;
-                           padding:6px 14px; background:${getStatusColor(order.status)}; color:white;">
-                ${order.status}
+                           padding:6px 14px; background:${getStatusColor(safeStatus)}; color:white;">
+                ${safeStatusLabel}
               </span>
             </div>
           `;
           container.appendChild(div);
         });
       });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeJsString(value) {
+      return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, ' ')
+        .replace(/\r/g, ' ');
     }
 
     function getStatusColor(s) {

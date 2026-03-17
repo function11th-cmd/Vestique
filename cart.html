@@ -667,6 +667,21 @@
       try { await deleteDoc(cartRef); } catch (e) {}
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function sanitizeImageUrl(url, fallback = 'https://placehold.co/120x150') {
+      const trimmed = String(url || '').trim();
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      return fallback;
+    }
+
     /* ─── Render ─────────────────────────────────────────────────── */
     function renderCart() {
       const container    = document.getElementById('cart-items');
@@ -689,23 +704,28 @@
       orderSummary.style.display = 'block';
 
       cartItems.forEach((item, index) => {
+        const safeName = escapeHtml(item.name || 'Item');
+        const safeImage = sanitizeImageUrl(item.image);
+        const safePrice = Number(item.price) || 0;
+        const safeQty = Number(item.qty) > 0 ? Number(item.qty) : 1;
+
         const div = document.createElement('div');
         div.className = 'cart-item';
         div.id = 'cart-item-' + index;
         div.style.animationDelay = (index * 0.1) + 's';
         div.innerHTML = `
-          <img src="${item.image}" alt="${item.name}" onerror="this.src='https://placehold.co/120x150'">
+          <img src="${safeImage}" alt="${safeName}" onerror="this.src='https://placehold.co/120x150'">
           <div class="cart-item-info">
-            <h3>${item.name}</h3>
-            <p class="item-price">₹${item.price.toLocaleString('en-IN')}</p>
+            <h3>${safeName}</h3>
+            <p class="item-price">₹${safePrice.toLocaleString('en-IN')}</p>
             <div class="quantity-control">
               <button onclick="window.changeQty(${index}, -1)">−</button>
-              <span id="qty-${index}">${item.qty}</span>
+              <span id="qty-${index}">${safeQty}</span>
               <button onclick="window.changeQty(${index}, 1)">+</button>
             </div>
           </div>
           <div class="cart-item-right">
-            <span class="item-total" id="total-${index}">₹${(item.price * item.qty).toLocaleString('en-IN')}</span>
+            <span class="item-total" id="total-${index}">₹${(safePrice * safeQty).toLocaleString('en-IN')}</span>
             <button class="remove-btn" onclick="window.removeItem(${index})">Remove</button>
           </div>
         `;

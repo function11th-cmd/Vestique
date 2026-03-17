@@ -514,6 +514,15 @@
       Cancelled:  '—'
     };
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     /* ─── Search ─────────────────────────────────────────────────── */
     window.searchOrder = async function() {
       const raw   = document.getElementById('order-id-input').value.trim();
@@ -553,8 +562,8 @@
       const isCancelled = order.status === 'Cancelled';
 
       // Header
-      document.getElementById('res-order-id').textContent = '#' + order.id;
-      document.getElementById('res-total').textContent    = '₹' + order.total.toLocaleString('en-IN');
+      document.getElementById('res-order-id').textContent = '#' + String(order.id || '—');
+      document.getElementById('res-total').textContent    = '₹' + (Number(order.total) || 0).toLocaleString('en-IN');
 
       // Cancelled banner
       document.getElementById('cancelled-banner').style.display = isCancelled ? 'block' : 'none';
@@ -564,13 +573,14 @@
 
       // Items
       const itemsEl = document.getElementById('res-items');
-      itemsEl.innerHTML = order.items.map(item => `
+      const orderItems = Array.isArray(order.items) ? order.items : [];
+      itemsEl.innerHTML = orderItems.map(item => `
         <div class="order-item-row">
           <div>
-            <p class="order-item-name">${item.name}</p>
-            <p class="order-item-qty">Qty: ${item.qty}</p>
+            <p class="order-item-name">${escapeHtml(item.name || 'Item')}</p>
+            <p class="order-item-qty">Qty: ${Number(item.qty) || 1}</p>
           </div>
-          <p class="order-item-price">₹${(item.price * item.qty).toLocaleString('en-IN')}</p>
+          <p class="order-item-price">₹${((Number(item.price) || 0) * (Number(item.qty) || 1)).toLocaleString('en-IN')}</p>
         </div>
       `).join('');
 

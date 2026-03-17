@@ -276,6 +276,23 @@
       Shipped: '#2980b9', Delivered: '#2d7a2d', Cancelled: '#c0392b'
     };
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeJsString(value) {
+      return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, ' ')
+        .replace(/\r/g, ' ');
+    }
+
     // Only Processing and Confirmed orders can be cancelled
     const CANCELLABLE = ['Processing', 'Confirmed'];
 
@@ -364,24 +381,34 @@
         }
 
         orders.forEach((order, i) => {
+          const safeOrderId = escapeHtml(order.id || '—');
+          const safeOrderQuery = encodeURIComponent(String(order.id || ''));
+          const safeItems = Array.isArray(order.items)
+            ? escapeHtml(order.items.map(x => x.name || 'Item').join(', '))
+            : '—';
+          const safeDate = escapeHtml(order.date || '—');
+          const safeTotal = Number(order.total) || 0;
+          const safeStatus = statusColors[order.status] ? order.status : 'Processing';
+          const safeStatusLabel = escapeHtml(safeStatus);
+          const safeFirestoreId = escapeJsString(order.firestoreId || '');
           const canCancel = CANCELLABLE.includes(order.status);
           const div = document.createElement('div');
           div.className = 'order-card';
           div.style.animationDelay = (i * 0.1) + 's';
           div.innerHTML = `
             <div>
-              <p class="order-id">Order #${order.id}</p>
-              <p class="order-items">${order.items.map(x => x.name).join(', ')}</p>
-              <p class="order-date">${order.date}</p>
-              <p class="order-total">₹${order.total.toLocaleString('en-IN')}</p>
+              <p class="order-id">Order #${safeOrderId}</p>
+              <p class="order-items">${safeItems}</p>
+              <p class="order-date">${safeDate}</p>
+              <p class="order-total">₹${safeTotal.toLocaleString('en-IN')}</p>
             </div>
             <div class="order-actions">
-              <span class="order-status" style="background:${statusColors[order.status] || '#6b6b6b'}">
-                ${order.status}
+              <span class="order-status" style="background:${statusColors[safeStatus] || '#6b6b6b'}">
+                ${safeStatusLabel}
               </span>
-              <a class="track-btn" href="tracking.html?order=${order.id}">Track Order</a>
+              <a class="track-btn" href="tracking.html?order=${safeOrderQuery}">Track Order</a>
               ${canCancel
-                ? `<button class="cancel-btn" onclick="window.requestCancel('${order.firestoreId}')">Cancel</button>`
+                ? `<button class="cancel-btn" onclick="window.requestCancel('${safeFirestoreId}')">Cancel</button>`
                 : ''}
             </div>
           `;
