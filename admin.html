@@ -580,9 +580,6 @@
       try { await updateDoc(doc(db, 'orders', firestoreId), { status: newStatus }); }
       catch(e) { alert('Error updating: ' + e.message); }
     };
-
-    // Initialize drag & drop when admin panel is shown
-    setTimeout(() => setupDragDrop(), 500);
   </script>
 
 </body>
