@@ -574,6 +574,7 @@
         <h2 class="modal-title" id="modal-title"></h2>
         <p class="modal-price"  id="modal-price"></p>
         <p class="modal-desc"   id="modal-desc"></p>
+        <p class="modal-desc" id="modal-stock" style="color: #2d7a2d; font-size: 0.9rem; margin: 8px 0;"></p>
 
         <p class="modal-section-label">Select Size <span style="color:#c0392b;">*</span></p>
         <div class="size-grid">
@@ -614,7 +615,8 @@
       doc,
       getDoc,
       setDoc,
-      onSnapshot
+      onSnapshot,
+      updateDoc
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     /* ─── Firebase init ─────────────────────────────────────────── */
@@ -660,12 +662,21 @@
     /* ─── Add to cart (Firestore) ───────────────────────────────── */
     async function addToCart(productId, qty, size) {
       const product = products.find(p => p.id === productId);
-      if (!product) return;
+      if (!product) {
+        console.error('Product not found:', productId);
+        return;
+      }
+
+      if (product.stock < qty) {
+        alert(`Only ${product.stock} item(s) available in stock`);
+        return;
+      }
 
       const addBtn = document.getElementById('modal-add-btn');
       if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Adding…'; }
 
       try {
+        console.log('Adding to cart - CART_ID:', CART_ID);
         const snap     = await getDoc(cartRef);
         let   items    = snap.exists() ? (snap.data().items || []) : [];
         const key      = productId + (size ? '-' + size : '');
@@ -685,11 +696,22 @@
         }
 
         await setDoc(cartRef, { items, cartId: CART_ID, updatedAt: Date.now() });
+        
+        // Decrease stock in products collection
+        const newStock = Math.max(0, product.stock - qty);
+        await updateDoc(doc(db, 'products', productId), {
+          stock: newStock,
+          status: newStock > 0 ? 'in-stock' : 'out-of-stock'
+        });
+        
         await updateCartCount();
         showToast(product.name);
       } catch (e) {
         console.error('Cart save error:', e);
-        alert('Could not add to cart. Please try again.');
+        console.error('Error code:', e.code);
+        console.error('Error message:', e.message);
+        console.error('CartRef:', cartRef.path);
+        alert(`Could not add to cart: ${e.message || e.code}`);
       } finally {
         if (addBtn) { addBtn.disabled = false; addBtn.textContent = 'Add to Cart'; }
       }
@@ -767,10 +789,14 @@
         const card = document.createElement("div");
         card.className = "product-card";
         card.style.animationDelay = (index * 0.08) + "s";
+        const isOutOfStock = !product.stock || product.stock <= 0;
+        const stockBadge = isOutOfStock ? '<div style="position:absolute;top:10px;right:10px;background:#c0392b;color:white;padding:6px 12px;font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;border-radius:3px;font-weight:500;">Out of Stock</div>' : '';
+        
         card.innerHTML = `
           <div style="position:relative;overflow:hidden;">
             <img class="product-card-img" src="${product.image}" alt="${product.name}"
               onerror="this.src='https://placehold.co/400x400'">
+            ${stockBadge}
             <div class="product-card-overlay">
               <button class="quick-view-btn" onclick="openModal('${product.id}')">Quick View</button>
             </div>
@@ -778,9 +804,10 @@
           <div class="product-card-info">
             <h3>${product.name}</h3>
             ${product.desc ? `<p class="desc">${product.desc}</p>` : ""}
+            <p class="desc" style="color: ${isOutOfStock ? '#c0392b' : '#2d7a2d'}; font-size:0.8rem; margin:6px 0;">Stock: ${product.stock || 0}</p>
             <div class="product-card-bottom">
               <span class="product-price">₹${Number(product.price).toLocaleString("en-IN")}</span>
-              <button class="add-btn" onclick="openModal('${product.id}')" title="Add to Cart">+</button>
+              <button class="add-btn" onclick="openModal('${product.id}')" title="Add to Cart" ${isOutOfStock ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>+</button>
             </div>
           </div>
         `;
@@ -794,13 +821,19 @@
       if (!currentProduct) return;
       modalQty = 1; selectedSize = "";
 
+      const isOutOfStock = !currentProduct.stock || currentProduct.stock <= 0;
+
       document.getElementById("modal-img").src               = currentProduct.image;
       document.getElementById("modal-title").textContent     = currentProduct.name;
       document.getElementById("modal-price").textContent     = "₹" + Number(currentProduct.price).toLocaleString("en-IN");
       document.getElementById("modal-desc").textContent      = currentProduct.desc || "Premium quality streetwear. Made for everyday style and comfort.";
+      document.getElementById("modal-stock").textContent     = `Stock: ${currentProduct.stock || 0}${isOutOfStock ? ' - Out of Stock' : ' Available'}`;
+      document.getElementById("modal-stock").style.color     = isOutOfStock ? '#c0392b' : '#2d7a2d';
       document.getElementById("modal-qty").textContent       = 1;
-      document.getElementById("modal-add-btn").textContent   = "Add to Cart";
-      document.getElementById("modal-add-btn").disabled      = false;
+      
+      const addBtn = document.getElementById("modal-add-btn");
+      addBtn.textContent   = isOutOfStock ? "Out of Stock" : "Add to Cart";
+      addBtn.disabled      = isOutOfStock;
 
       const toggle = document.getElementById("img-toggle");
       if (currentProduct.imageBack) {
@@ -851,6 +884,7 @@
 
     window.addToCartFromModal = async function() {
       if (!currentProduct) return;
+      if (currentProduct.stock <= 0) { alert('This product is out of stock'); return; }
       if (!selectedSize) { alert('Please select a size!'); return; }
       await addToCart(currentProduct.id, modalQty, selectedSize);
       window.closeModal();

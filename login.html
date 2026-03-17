@@ -185,6 +185,7 @@
         <div style="text-align: center;">
           <h2 class="form-title">Welcome</h2>
           <p class="form-subtitle">Sign in with your Google account</p>
+          <div id="error-message" style="display: none; background: #fdf0f0; color: #c0392b; padding: 12px; border-radius: 4px; margin: 20px 0; font-size: 0.85rem; text-align: left;"></div>
           <div style="margin-top: 40px;">
             <button class="google-btn" id="google-btn" onclick="handleGoogleLogin('google-btn')">
               <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px; margin-right: 8px;">
@@ -256,10 +257,17 @@
     /* ─── Google Login ──────────────────────────────────────────── */
     window.handleGoogleLogin = async function(buttonId) {
       setLoading(buttonId, true);
+      const errorEl = document.getElementById('error-message');
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
 
       try {
+        console.log('Starting Google Sign-In...');
         const provider = new GoogleAuthProvider();
+        console.log('Provider created:', provider);
+        
         const result   = await signInWithPopup(auth, provider);
+        console.log('Sign-in successful:', result);
         const user     = result.user;
 
         // Cache name + email in localStorage for cart ID and checkout pre-fill
@@ -273,6 +281,23 @@
 
       } catch (e) {
         console.error('Google sign-in error:', e);
+        console.error('Error code:', e.code);
+        console.error('Error message:', e.message);
+        
+        let errorMsg = 'Sign-in failed. Please try again.';
+        if (e.code === 'auth/popup-closed-by-user') {
+          errorMsg = 'Sign-in was cancelled.';
+        } else if (e.code === 'auth/popup-blocked') {
+          errorMsg = 'Sign-in popup was blocked. Please allow popups and try again.';
+        } else if (e.code === 'auth/cancelled-popup-request') {
+          errorMsg = 'Multiple sign-in attempts detected. Please try again.';
+        } else {
+          errorMsg = `Error: ${e.message || e.code || 'Unknown error'}`;
+        }
+        
+        errorEl.textContent = errorMsg;
+        errorEl.style.display = 'block';
+        console.error('Full error object:', e);
       } finally {
         setLoading(buttonId, false);
       }
