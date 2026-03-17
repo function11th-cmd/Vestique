@@ -791,16 +791,25 @@
         return;
       }
 
-      if (product.stock < qty) {
-        alert(`Only ${product.stock} item(s) available in stock`);
-        return;
-      }
-
       const addBtn = document.getElementById('modal-add-btn');
       if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Adding…'; }
 
       try {
         console.log('Adding to cart - CART_ID:', CART_ID);
+        
+        // Check real-time stock from Firestore to prevent overselling
+        const productDoc = await getDoc(doc(db, 'products', productId));
+        if (!productDoc.exists()) {
+          alert('Product no longer available');
+          return;
+        }
+        
+        const currentStock = productDoc.data().stock || 0;
+        if (currentStock < qty) {
+          alert(`Only ${currentStock} item(s) available in stock`);
+          return;
+        }
+
         const snap     = await getDoc(cartRef);
         let   items    = snap.exists() ? (snap.data().items || []) : [];
         const key      = productId + (size ? '-' + size : '');
@@ -822,11 +831,14 @@
         await setDoc(cartRef, { items, cartId: CART_ID, updatedAt: Date.now() });
         
         // Decrease stock in products collection
-        const newStock = Math.max(0, product.stock - qty);
+        const newStock = Math.max(0, currentStock - qty);
         await updateDoc(doc(db, 'products', productId), {
           stock: newStock,
-          status: newStock > 0 ? 'in-stock' : 'out-of-stock'
+          status: newStock > 0 ? 'in-stock' : 'out-of-stock',
+          lastUpdated: Date.now()
         });
+        
+        console.log(`Stock updated: ${productId} → ${newStock} (was ${currentStock})`);
         
         await updateCartCount();
         showToast(product.name);
