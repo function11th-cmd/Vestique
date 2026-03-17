@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Track Order — Vestique</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    .track-hero {
+      background: #0a0a0a;
+      padding: 100px 50px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .track-hero::before {
+      content: 'TRACK';
+      position: absolute;
+      font-family: 'Playfair Display', serif;
+      font-size: 16rem;
+      color: rgba(255,255,255,0.02);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .track-hero p { font-size: 0.7rem; letter-spacing: 5px; text-transform: uppercase; color: #c8a97e; margin-bottom: 16px; }
+    .track-hero h1 { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 400; color: #fafafa; letter-spacing: 2px; margin-bottom: 40px; }
+
+    .search-bar {
+      display: flex;
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 16px 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-right: none;
+      background: rgba(255,255,255,0.05);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: white;
+      letter-spacing: 3px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .search-bar input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 2px; font-size: 0.85rem; }
+    .search-bar input:focus { border-color: #c8a97e; }
+
+    .search-bar button {
+      padding: 16px 28px;
+      background: #c8a97e;
+      color: #0a0a0a;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .search-bar button:hover { background: white; }
+    .search-bar button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* RESULT AREA */
+    .track-wrapper { max-width: 760px; margin: 0 auto; padding: 60px 30px 100px; }
+
+    /* NOT FOUND */
+    .not-found {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      border: 1px dashed #e8e4e0;
+    }
+
+    .not-found p:first-child {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .not-found span { color: #6b6b6b; font-size: 0.85rem; }
+
+    /* ORDER RESULT */
+    .order-result { display: none; animation: fadeUp 0.5s ease forwards; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ORDER HEADER */
+    .order-header {
+      background: #0a0a0a;
+      padding: 30px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0;
+    }
+
+    .order-header-left p:first-child {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #c8a97e;
+      margin-bottom: 6px;
+    }
+
+    .order-header-left h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+      color: white;
+    }
+
+    .order-header-right { text-align: right; }
+    .order-header-right p:first-child { font-size: 0.75rem; color: rgba(255,255,255,0.4); letter-spacing: 1px; margin-bottom: 4px; }
+    .order-header-right .order-total-val { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: #c8a97e; }
+
+    /* TIMELINE */
+    .timeline-section {
+      background: #fafafa;
+      padding: 40px 36px;
+      margin-bottom: 2px;
+    }
+
+    .timeline-section h4 {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #6b6b6b;
+      margin-bottom: 36px;
+    }
+
+    .timeline {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      right: 18px;
+      height: 1px;
+      background: #e8e4e0;
+      z-index: 0;
+    }
+
+    .timeline-progress {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      height: 1px;
+      background: #c8a97e;
+      z-index: 1;
+      transition: width 1s ease;
+      width: 0%;
+    }
+
+    .timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+
+    .step-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #e8e4e0;
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: all 0.5s ease;
+      color: #e8e4e0;
+    }
+
+    .step-dot.done {
+      background: #0a0a0a;
+      border-color: #0a0a0a;
+      color: #c8a97e;
+    }
+
+    .step-dot.active {
+      background: #c8a97e;
+      border-color: #c8a97e;
+      color: #0a0a0a;
+      box-shadow: 0 0 0 6px rgba(200,169,126,0.15);
+      animation: pulse 2s infinite;
+    }
+
+    .step-dot.cancelled {
+      background: #c0392b;
+      border-color: #c0392b;
+      color: white;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 6px rgba(200,169,126,0.15); }
+      50%       { box-shadow: 0 0 0 10px rgba(200,169,126,0.05); }
+    }
+
+    .step-label {
+      font-size: 0.7rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #6b6b6b;
+      text-align: center;
+      transition: color 0.5s;
+    }
+
+    .step-label.active { color: #0a0a0a; font-weight: 500; }
+    .step-label.done   { color: #0a0a0a; }
+
+    /* CANCELLED BANNER */
+    .cancelled-banner {
+      display: none;
+      background: #c0392b;
+      color: white;
+      padding: 14px 36px;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* ORDER ITEMS */
+    .items-section {
+      background: #fafafa;
+      padding: 36px;
+      margin-bottom: 2px;
+    }
+
+    .items-section h4 {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #6b6b6b;
+      margin-bottom: 24px;
+    }
+
+    .order-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid #e8e4e0;
+    }
+
+    .order-item-row:last-child { border-bottom: none; }
+
+    .order-item-name { font-family: 'Playfair Display', serif; font-size: 1rem; }
+    .order-item-qty  { font-size: 0.8rem; color: #6b6b6b; margin-top: 2px; }
+    .order-item-price { font-family: 'Playfair Display', serif; color: #c8a97e; }
+
+    /* DELIVERY INFO */
+    .delivery-section {
+      background: #fafafa;
+      padding: 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    .delivery-block h4 {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #6b6b6b;
+      margin-bottom: 12px;
+    }
+
+    .delivery-block p { font-size: 0.9rem; color: #0a0a0a; line-height: 1.7; }
+
+    /* ETA */
+    .eta-bar {
+      background: #f5f0eb;
+      border-left: 3px solid #c8a97e;
+      padding: 16px 24px;
+      margin-top: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .eta-bar span:first-child { font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: #6b6b6b; }
+    .eta-bar span:last-child  { font-family: 'Playfair Display', serif; font-size: 1rem; color: #0a0a0a; }
+
+    @media (max-width: 768px) {
+      .track-hero     { padding: 80px 24px 50px; }
+      .track-hero h1  { font-size: 2rem; }
+      .order-header   { flex-direction: column; gap: 16px; align-items: flex-start; }
+      .order-header-right { text-align: left; }
+      .delivery-section   { grid-template-columns: 1fr; }
+      .step-label { font-size: 0.6rem; letter-spacing: 1px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>Vestique</h2>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+      <a href="login.html">Login</a>
+      <a href="dashboard.html">My Account</a>
+      <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+    </nav>
+  </header>
+  <script>
+    if (sessionStorage.getItem("admin-auth") === "true") {
+      document.getElementById("admin-link").style.display = "inline";
+    }
+  </script>
+
+  <!-- HERO + SEARCH -->
+  <div class="track-hero">
+    <p>Vestique</p>
+    <h1>Track Your Order</h1>
+    <div class="search-bar">
+      <input type="text" id="order-id-input" placeholder="Enter order number (e.g. 123456)"
+        onkeydown="if(event.key==='Enter') searchOrder()">
+      <button id="track-btn" onclick="searchOrder()">Track</button>
+    </div>
+  </div>
+
+  <div class="track-wrapper">
+
+    <!-- NOT FOUND -->
+    <div class="not-found" id="not-found">
+      <p>Order not found</p>
+      <span>Double-check your order number and try again.</span>
+    </div>
+
+    <!-- ORDER RESULT -->
+    <div class="order-result" id="order-result">
+
+      <div class="order-header">
+        <div class="order-header-left">
+          <p>Order</p>
+          <h3 id="res-order-id">#000000</h3>
+        </div>
+        <div class="order-header-right">
+          <p>Order Total</p>
+          <p class="order-total-val" id="res-total">₹0</p>
+        </div>
+      </div>
+
+      <!-- CANCELLED BANNER -->
+      <div class="cancelled-banner" id="cancelled-banner">
+        ✕ &nbsp; This order has been cancelled
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="timeline-section">
+        <h4>Order Status</h4>
+        <div class="timeline" id="timeline">
+          <div class="timeline-progress" id="timeline-progress"></div>
+
+          <div class="timeline-step">
+            <div class="step-dot" id="dot-0">📋</div>
+            <span class="step-label" id="lbl-0">Processing</span>
+          </div>
+          <div class="timeline-step">
+            <div class="step-dot" id="dot-1">✓</div>
+            <span class="step-label" id="lbl-1">Confirmed</span>
+          </div>
+          <div class="timeline-step">
+            <div class="step-dot" id="dot-2">🚚</div>
+            <span class="step-label" id="lbl-2">Shipped</span>
+          </div>
+          <div class="timeline-step">
+            <div class="step-dot" id="dot-3">🏠</div>
+            <span class="step-label" id="lbl-3">Delivered</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEMS -->
+      <div class="items-section">
+        <h4>Items Ordered</h4>
+        <div id="res-items"></div>
+      </div>
+
+      <!-- DELIVERY INFO -->
+      <div class="delivery-section">
+        <div class="delivery-block">
+          <h4>Deliver To</h4>
+          <p id="res-name"></p>
+          <p id="res-address"></p>
+        </div>
+        <div class="delivery-block">
+          <h4>Contact</h4>
+          <p id="res-email"></p>
+          <p id="res-phone"></p>
+        </div>
+      </div>
+
+      <!-- ETA -->
+      <div class="eta-bar" id="eta-bar">
+        <span>Estimated Delivery</span>
+        <span id="res-eta">—</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="admin-gear" onclick="window.location.href='admin.html'"
+    style="display:none; position:fixed; bottom:24px; right:24px; width:44px; height:44px;
+           background:#0a0a0a; color:#c8a97e; border-radius:50%; cursor:pointer; font-size:1.2rem;
+           align-items:center; justify-content:center; z-index:999;
+           box-shadow:0 4px 16px rgba(0,0,0,0.2); transition:transform 0.3s;">⚙</div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import {
+      getFirestore, collection, query, where, getDocs, doc, getDoc
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPqTTmRHkNffvsrP6iVteokpxJ5xzQkqw",
+      authDomain: "vestique-d6b6f.firebaseapp.com",
+      projectId: "vestique-d6b6f",
+      storageBucket: "vestique-d6b6f.firebasestorage.app",
+      messagingSenderId: "517893374274",
+      appId: "1:517893374274:web:fe371519fba987cee4c8db"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // Pre-fill from URL param e.g. tracking.html?order=123456
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlOrder  = urlParams.get('order');
+    if (urlOrder) {
+      document.getElementById('order-id-input').value = urlOrder;
+      window.addEventListener('load', () => searchOrder());
+    }
+
+    // Cart count
+    async function updateCartCount() {
+      try {
+        const user = JSON.parse(localStorage.getItem('vestique-current-user') || 'null');
+        const cartId = user ? 'user_' + user.email.replace(/[.@]/g, '_')
+                            : localStorage.getItem('vestique-guest-id');
+        if (!cartId) return;
+        const snap  = await getDoc(doc(db, 'carts', cartId));
+        const items = snap.exists() ? (snap.data().items || []) : [];
+        document.getElementById('cart-count').textContent = items.reduce((s, i) => s + i.qty, 0);
+      } catch {}
+    }
+    updateCartCount();
+
+    /* ─── Status config ─────────────────────────────────────────── */
+    const STATUSES    = ['Processing', 'Confirmed', 'Shipped', 'Delivered'];
+    const STATUS_ETA  = {
+      Processing: '5–7 business days',
+      Confirmed:  '4–6 business days',
+      Shipped:    '2–3 business days',
+      Delivered:  'Delivered',
+      Cancelled:  '—'
+    };
+
+    /* ─── Search ─────────────────────────────────────────────────── */
+    window.searchOrder = async function() {
+      const raw   = document.getElementById('order-id-input').value.trim();
+      const ordId = raw.replace('#', '');
+      if (!ordId) return;
+
+      const btn = document.getElementById('track-btn');
+      btn.disabled    = true;
+      btn.textContent = '…';
+
+      document.getElementById('not-found').style.display    = 'none';
+      document.getElementById('order-result').style.display = 'none';
+
+      try {
+        const q    = query(collection(db, 'orders'), where('id', '==', ordId));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          document.getElementById('not-found').style.display = 'block';
+          return;
+        }
+
+        const order = { firestoreId: snap.docs[0].id, ...snap.docs[0].data() };
+        renderOrder(order);
+
+      } catch (e) {
+        console.error(e);
+        document.getElementById('not-found').style.display = 'block';
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Track';
+      }
+    };
+
+    /* ─── Render ─────────────────────────────────────────────────── */
+    function renderOrder(order) {
+      const isCancelled = order.status === 'Cancelled';
+
+      // Header
+      document.getElementById('res-order-id').textContent = '#' + order.id;
+      document.getElementById('res-total').textContent    = '₹' + order.total.toLocaleString('en-IN');
+
+      // Cancelled banner
+      document.getElementById('cancelled-banner').style.display = isCancelled ? 'block' : 'none';
+
+      // Timeline
+      renderTimeline(order.status);
+
+      // Items
+      const itemsEl = document.getElementById('res-items');
+      itemsEl.innerHTML = order.items.map(item => `
+        <div class="order-item-row">
+          <div>
+            <p class="order-item-name">${item.name}</p>
+            <p class="order-item-qty">Qty: ${item.qty}</p>
+          </div>
+          <p class="order-item-price">₹${(item.price * item.qty).toLocaleString('en-IN')}</p>
+        </div>
+      `).join('');
+
+      // Delivery info
+      document.getElementById('res-name').textContent    = order.name    || '—';
+      document.getElementById('res-address').textContent = order.address || '—';
+      document.getElementById('res-email').textContent   = order.email   || '—';
+      document.getElementById('res-phone').textContent   = order.phone   || '—';
+
+      // ETA
+      document.getElementById('res-eta').textContent = STATUS_ETA[order.status] || '5–7 business days';
+      if (isCancelled) document.getElementById('eta-bar').style.display = 'none';
+      else             document.getElementById('eta-bar').style.display = 'flex';
+
+      // Show result
+      const resultEl = document.getElementById('order-result');
+      resultEl.style.display   = 'block';
+      resultEl.style.animation = 'none';
+      void resultEl.offsetWidth; // reflow
+      resultEl.style.animation = '';
+    }
+
+    function renderTimeline(status) {
+      const idx         = STATUSES.indexOf(status);
+      const isCancelled = status === 'Cancelled';
+
+      STATUSES.forEach((s, i) => {
+        const dot = document.getElementById('dot-' + i);
+        const lbl = document.getElementById('lbl-' + i);
+
+        dot.className  = 'step-dot';
+        lbl.className  = 'step-label';
+
+        if (isCancelled) {
+          dot.className = 'step-dot cancelled';
+          dot.textContent = '✕';
+          lbl.textContent = i === 0 ? 'Cancelled' : STATUSES[i];
+          return;
+        }
+
+        if (i < idx) {
+          dot.classList.add('done');
+          lbl.classList.add('done');
+        } else if (i === idx) {
+          dot.classList.add('active');
+          lbl.classList.add('active');
+        }
+      });
+
+      // Animate progress bar
+      const progressEl = document.getElementById('timeline-progress');
+      if (isCancelled) { progressEl.style.width = '0%'; return; }
+
+      // Progress goes between dots (0 steps = 0%, 1 step = 33%, 2 = 66%, 3 = 100%)
+      const pct = idx <= 0 ? 0 : (idx / (STATUSES.length - 1)) * 100;
+      setTimeout(() => { progressEl.style.width = pct + '%'; }, 100);
+    }
+
+    if (sessionStorage.getItem('admin-auth') === 'true') {
+      document.getElementById('admin-gear').style.display = 'flex';
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vestique</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a0a0a;
+      color: #fafafa;
+      overflow-x: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background: transparent;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 24px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.4s ease;
+    }
+
+    header.scrolled {
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #c8a97e;
+    }
+
+    nav { display: flex; gap: 36px; align-items: center; }
+
+    nav a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+
+    nav a:hover { color: #c8a97e; }
+
+    /* HERO */
+    .hero {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, #1a1408 0%, #0a0a0a 70%);
+    }
+
+    .hero-text-bg {
+      position: absolute;
+      font-family: 'Playfair Display', serif;
+      font-size: 22vw;
+      color: rgba(200,169,126,0.04);
+      letter-spacing: -2px;
+      pointer-events: none;
+      white-space: nowrap;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      user-select: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      animation: heroFadeIn 1.2s ease forwards;
+    }
+
+    @keyframes heroFadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-label {
+      font-size: 0.7rem;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #c8a97e;
+      margin-bottom: 24px;
+      animation: heroFadeIn 1s ease 0.2s both;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 7vw, 6rem);
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+      animation: heroFadeIn 1s ease 0.4s both;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: #c8a97e;
+    }
+
+    .hero-subtitle {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 2px;
+      margin-bottom: 48px;
+      animation: heroFadeIn 1s ease 0.6s both;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      animation: heroFadeIn 1s ease 0.8s both;
+    }
+
+    .btn-primary {
+      padding: 16px 48px;
+      background: #c8a97e;
+      color: #0a0a0a;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary:hover {
+      background: #fafafa;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      padding: 16px 48px;
+      background: transparent;
+      color: #fafafa;
+      border: 1px solid rgba(255,255,255,0.2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-secondary:hover {
+      border-color: #c8a97e;
+      color: #c8a97e;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: heroFadeIn 1s ease 1.2s both;
+    }
+
+    .scroll-indicator span {
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, #c8a97e, transparent);
+      animation: scrollPulse 2s ease infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.2); }
+    }
+
+    /* MARQUEE */
+    .marquee-section {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 18px 0;
+      overflow: hidden;
+      background: #0f0f0f;
+    }
+
+    .marquee-track {
+      display: flex;
+      gap: 60px;
+      animation: marquee 20s linear infinite;
+      white-space: nowrap;
+    }
+
+    .marquee-track span {
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+
+    .marquee-track span.accent { color: #c8a97e; }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* CATEGORIES */
+    .categories-section {
+      padding: 100px 50px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 50px;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #c8a97e;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+
+    .section-link {
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 2px;
+      transition: all 0.3s;
+    }
+
+    .section-link:hover { color: #c8a97e; border-bottom-color: #c8a97e; }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 16px;
+      height: 500px;
+    }
+
+    .category-card {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .category-card-bg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .category-card:hover .category-card-bg { transform: scale(1.05); }
+
+    .category-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%);
+    }
+
+    .category-card-info {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+    }
+
+    .category-card-info h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      margin-bottom: 4px;
+    }
+
+    .category-card-info p {
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #c8a97e;
+    }
+
+    .category-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+    }
+
+    /* FEATURES */
+    .features-section {
+      padding: 80px 50px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+    }
+
+    .feature {
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .feature h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 400;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .feature p {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.5px;
+      line-height: 1.6;
+    }
+
+    /* TAGLINE SECTION */
+    .tagline-section {
+      padding: 120px 50px;
+      text-align: center;
+      background: linear-gradient(135deg, #0f0e0c, #0a0a0a);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tagline-section::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,169,126,0.06) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .tagline-section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.3;
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+      position: relative;
+    }
+
+    .tagline-section h2 em {
+      font-style: italic;
+      color: #c8a97e;
+    }
+
+    .tagline-section p {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      margin-bottom: 40px;
+    }
+
+    /* FOOTER */
+    footer {
+      background: #050505;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 60px 50px 30px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 50px;
+      margin-bottom: 50px;
+    }
+
+    .footer-brand h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #c8a97e;
+      margin-bottom: 16px;
+    }
+
+    .footer-brand p {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.8;
+      max-width: 260px;
+    }
+
+    .footer-col h4 {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 20px;
+    }
+
+    .footer-col a {
+      display: block;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.3);
+      text-decoration: none;
+      margin-bottom: 12px;
+      transition: color 0.3s;
+    }
+
+    .footer-col a:hover { color: #c8a97e; }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-bottom p {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 768px) {
+      header { padding: 20px 24px; }
+      .categories-grid { grid-template-columns: 1fr; height: auto; }
+      .categories-grid .category-card { height: 200px; }
+      .features-section { grid-template-columns: repeat(2, 1fr); padding: 60px 24px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .categories-section { padding: 60px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header id="main-header">
+    <h2>Vestique</h2>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="login.html">Login</a>
+      <a href="cart.html">Cart</a>
+      <a href="dashboard.html">My Account</a>
+      <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-text-bg">VESTIQUE</div>
+    <div class="hero-content">
+      <p class="hero-label">New Collection 2026</p>
+      <h1 class="hero-title">Premium<br><em>Jerseys</em></h1>
+      <p class="hero-subtitle">Football · Basketball · Cricket</p>
+      <div class="hero-btns">
+        <a href="products.html" class="btn-primary">Shop Now</a>
+        <a href="products.html" class="btn-secondary">View Collection</a>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span>Football Jerseys</span>
+      <span class="accent">✦</span>
+      <span>Basketball Jerseys</span>
+      <span class="accent">✦</span>
+      <span>Cricket Jerseys</span>
+      <span class="accent">✦</span>
+      <span>Free Shipping</span>
+      <span class="accent">✦</span>
+      <span>Authentic Quality</span>
+      <span class="accent">✦</span>
+      <span>Football Jerseys</span>
+      <span class="accent">✦</span>
+      <span>Basketball Jerseys</span>
+      <span class="accent">✦</span>
+      <span>Cricket Jerseys</span>
+      <span class="accent">✦</span>
+      <span>Free Shipping</span>
+      <span class="accent">✦</span>
+      <span>Authentic Quality</span>
+      <span class="accent">✦</span>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <section class="categories-section">
+    <div class="section-header">
+      <div>
+        <p class="section-label">Browse by Sport</p>
+        <h2 class="section-title">Shop by Category</h2>
+      </div>
+      <a href="products.html" class="section-link">View All</a>
+    </div>
+    <div class="categories-grid">
+      <div class="category-card" onclick="window.location='products.html?filter=football'">
+        <div class="category-placeholder" style="background:linear-gradient(135deg,#0d1f0d,#1a3a1a);">⚽</div>
+        <div class="category-card-overlay"></div>
+        <div class="category-card-info">
+          <h3>Football Jerseys</h3>
+          <p>Shop Now →</p>
+        </div>
+      </div>
+      <div class="category-card" onclick="window.location='products.html?filter=basketball'">
+        <div class="category-placeholder" style="background:linear-gradient(135deg,#1a0d00,#3a1f00);">🏀</div>
+        <div class="category-card-overlay"></div>
+        <div class="category-card-info">
+          <h3>Basketball Jerseys</h3>
+          <p>Shop Now →</p>
+        </div>
+      </div>
+      <div class="category-card" onclick="window.location='products.html?filter=cricket'">
+        <div class="category-placeholder" style="background:linear-gradient(135deg,#0d0d1a,#1a1a3a);">🏏</div>
+        <div class="category-card-overlay"></div>
+        <div class="category-card-info">
+          <h3>Cricket Jerseys</h3>
+          <p>Shop Now →</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPORT PILLS -->
+    <div style="display:flex; gap:12px; margin-top:24px; flex-wrap:wrap;">
+      <a href="products.html?filter=football" class="sport-pill">⚽ Football</a>
+      <a href="products.html?filter=basketball" class="sport-pill">🏀 Basketball</a>
+      <a href="products.html?filter=cricket" class="sport-pill">🏏 Cricket</a>
+      <a href="products.html" class="sport-pill sport-pill-outline">View All Jerseys</a>
+    </div>
+  </section>
+
+  <style>
+    .sport-pill {
+      display: inline-block;
+      padding: 10px 24px;
+      background: rgba(200,169,126,0.12);
+      border: 1px solid rgba(200,169,126,0.25);
+      color: #c8a97e;
+      text-decoration: none;
+      font-size: 0.78rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+    .sport-pill:hover { background: #c8a97e; color: #0a0a0a; border-color: #c8a97e; }
+    .sport-pill-outline { background: transparent; color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.15); }
+    .sport-pill-outline:hover { background: rgba(255,255,255,0.08); color: #fafafa; border-color: rgba(255,255,255,0.3); }
+  </style>
+
+  <!-- FEATURES -->
+  <div class="features-section">
+    <div class="feature">
+      <span class="feature-icon">🚚</span>
+      <h4>Free Shipping</h4>
+      <p>On all orders across India</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">✦</span>
+      <h4>Premium Quality</h4>
+      <p>Carefully curated streetwear pieces</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">↩️</span>
+      <h4>Easy Returns</h4>
+      <p>7 day hassle free returns</p>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">🔒</span>
+      <h4>Secure Payments</h4>
+      <p>100% safe & secure checkout</p>
+    </div>
+  </div>
+
+  <!-- TAGLINE -->
+  <section class="tagline-section">
+    <h2>Wear the game.<br><em>Own the moment.</em></h2>
+    <p>Authentic jerseys for football, basketball & cricket fans.</p>
+    <a href="products.html" class="btn-primary">Explore Collection</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>Vestique</h3>
+        <p>Modern streetwear for the bold. Premium quality clothing designed for everyday life.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <a href="products.html">All Products</a>
+        <a href="products.html">New Arrivals</a>
+        <a href="products.html">Best Sellers</a>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <a href="login.html">Sign In</a>
+        <a href="login.html">Create Account</a>
+        <a href="dashboard.html">My Orders</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="#">Shipping Info</a>
+        <a href="#">Returns</a>
+        <a href="#">Contact Us</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Vestique. All rights reserved.</p>
+      <p>Made with ♥ in India</p>
+    </div>
+  </footer>
+
+  <div id="admin-gear" onclick="window.location.href='admin.html'" style="display:none; position:fixed; bottom:24px; right:24px; width:44px; height:44px; background:#0a0a0a; color:#c8a97e; border-radius:50%; cursor:pointer; font-size:1.2rem; align-items:center; justify-content:center; z-index:999; box-shadow:0 4px 16px rgba(0,0,0,0.2);">⚙</div>
+
+  <script>
+    // Sticky header on scroll
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('main-header');
+      header.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Admin auth
+    if (sessionStorage.getItem('admin-auth') === 'true') {
+      document.getElementById('admin-link').style.display = 'inline';
+      document.getElementById('admin-gear').style.display = 'flex';
+    }
+  </script>
+
+</body>
+</html>

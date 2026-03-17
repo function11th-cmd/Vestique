@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bulk Upload — Vestique</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #0a0a0a; --white: #fafafa; --cream: #f5f0eb;
+      --accent: #c8a97e; --gray: #6b6b6b; --light-gray: #e8e4e0;
+      --red: #c0392b; --green: #2d7a2d;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--black); min-height: 100vh; }
+    header { background: var(--black); padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; }
+    header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); }
+    header a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; transition: color 0.3s; }
+    header a:hover { color: var(--accent); }
+    .page-title { padding: 50px 50px 10px; font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 400; letter-spacing: 1px; }
+    .page-subtitle { padding: 0 50px 40px; color: var(--gray); font-size: 0.9rem; border-bottom: 1px solid var(--light-gray); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 40px 50px 80px; }
+    .jersey-card { background: var(--white); padding: 36px; margin-bottom: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); animation: fadeUp 0.3s ease forwards; opacity: 0; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+    .card-number { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); letter-spacing: 1px; }
+    .remove-btn { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s; }
+    .remove-btn:hover { color: var(--red); }
+    .card-grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); }
+    .field input, .field textarea { width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid var(--light-gray); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--black); outline: none; transition: border-color 0.3s; }
+    .field input:focus, .field textarea:focus { border-bottom-color: var(--black); }
+    .field textarea { resize: none; height: 60px; }
+    .image-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+    .image-field { display: flex; flex-direction: column; gap: 8px; }
+    .image-field label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); }
+    .image-field input { width: 100%; padding: 10px 0; border: none; border-bottom: 1px solid var(--light-gray); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; outline: none; transition: border-color 0.3s; }
+    .image-field input:focus { border-bottom-color: var(--black); }
+    .img-preview { width: 100%; height: 140px; background: var(--light-gray); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 8px; }
+    .img-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .img-preview span { font-size: 0.75rem; color: var(--gray); letter-spacing: 1px; }
+    .actions { display: flex; gap: 16px; margin-top: 40px; flex-wrap: wrap; }
+    .add-jersey-btn { padding: 14px 32px; background: transparent; border: 1px solid var(--black); color: var(--black); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
+    .add-jersey-btn:hover { background: var(--black); color: var(--white); }
+    .upload-all-btn { padding: 14px 48px; background: var(--accent); border: none; color: var(--black); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; font-weight: 500; transition: all 0.3s; }
+    .upload-all-btn:hover:not(:disabled) { background: var(--black); color: var(--white); }
+    .upload-all-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .status-bar { display: none; margin-top: 24px; padding: 20px 24px; }
+    .status-bar.success { background: #f0f7f0; color: var(--green); }
+    .status-bar.error { background: #fdf0f0; color: var(--red); }
+    .status-bar p { font-size: 0.85rem; }
+    .progress { margin-top: 12px; height: 3px; background: var(--light-gray); }
+    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
+    .count-label { font-size: 0.75rem; color: var(--gray); margin-top: 8px; letter-spacing: 1px; }
+    /* Gate */
+    .gate { min-height: 80vh; display: flex; align-items: center; justify-content: center; }
+    .gate-box { background: var(--white); padding: 60px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+    .gate-box h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 400; margin-bottom: 6px; color: var(--accent); }
+    .gate-sub { color: var(--gray); font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 40px; }
+    .gate-box input { width: 100%; padding: 14px 0; border: none; border-bottom: 1px solid var(--light-gray); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; margin-bottom: 24px; outline: none; text-align: center; }
+    .gate-box input:focus { border-bottom-color: var(--black); }
+    .gate-box button { width: 100%; padding: 16px; background: var(--black); color: white; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: all 0.3s; margin-top: 6px; }
+    .gate-box button:hover:not(:disabled) { background: var(--accent); color: var(--black); }
+    .gate-box button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .gate-error { display: none; color: var(--red); font-size: 0.8rem; margin-top: 14px; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>Vestique</h2>
+  <a href="admin.html">← Back to Admin</a>
+</header>
+
+<!-- LOGIN GATE -->
+<div class="gate" id="login-gate">
+  <div class="gate-box">
+    <h2>Vestique</h2>
+    <p class="gate-sub">Bulk Upload Access</p>
+    <input type="email" id="gate-email" placeholder="Admin email" onkeydown="if(event.key==='Enter') adminLogin()">
+    <input type="password" id="gate-password" placeholder="Password" onkeydown="if(event.key==='Enter') adminLogin()">
+    <button id="gate-btn" onclick="adminLogin()">Sign In</button>
+    <p class="gate-error" id="gate-error">Incorrect credentials or not an admin.</p>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content" style="display:none;">
+  <h1 class="page-title">Bulk Product Upload</h1>
+  <p class="page-subtitle">Add all your jerseys at once — fill in details and upload to Firestore in one click</p>
+  <div class="container">
+    <div id="jerseys-container"></div>
+    <div class="actions">
+      <button class="add-jersey-btn" onclick="addJersey()">+ Add Another Jersey</button>
+      <button class="upload-all-btn" id="upload-btn" onclick="uploadAll()">Upload All to Store</button>
+    </div>
+    <div class="status-bar" id="status-bar">
+      <p id="status-text"></p>
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+      <p class="count-label" id="count-label"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+  import { getFirestore, collection, addDoc, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBPqTTmRHkNffvsrP6iVteokpxJ5xzQkqw",
+    authDomain: "vestique-d6b6f.firebaseapp.com",
+    projectId: "vestique-d6b6f",
+    storageBucket: "vestique-d6b6f.firebasestorage.app",
+    messagingSenderId: "517893374274",
+    appId: "1:517893374274:web:fe371519fba987cee4c8db"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const snap = await getDoc(doc(db, 'admins', user.email));
+      if (snap.exists()) showMain();
+    }
+  });
+
+  function showMain() {
+    document.getElementById('login-gate').style.display   = 'none';
+    document.getElementById('main-content').style.display = 'block';
+    if (!document.querySelector('.jersey-card')) {
+      for (let i = 0; i < 4; i++) window.addJersey();
+    }
+  }
+
+  window.adminLogin = async function() {
+    const email    = document.getElementById('gate-email').value.trim();
+    const password = document.getElementById('gate-password').value;
+    const btn      = document.getElementById('gate-btn');
+    const errEl    = document.getElementById('gate-error');
+    if (!email || !password) return;
+    btn.disabled = true; btn.textContent = 'Signing in…'; errEl.style.display = 'none';
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const snap = await getDoc(doc(db, 'admins', cred.user.email));
+      if (!snap.exists()) throw new Error('Not an admin');
+      showMain();
+    } catch(e) {
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  };
+
+  let jerseyCount = 0;
+
+  window.addJersey = function() {
+    jerseyCount++;
+    const container = document.getElementById('jerseys-container');
+    const card = document.createElement('div');
+    card.className = 'jersey-card';
+    card.id = `jersey-${jerseyCount}`;
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="card-number">Jersey ${jerseyCount}</span>
+        <button class="remove-btn" onclick="removeJersey(${jerseyCount})">Remove</button>
+      </div>
+      <div class="card-grid-3">
+        <div class="field">
+          <label>Jersey Name</label>
+          <input type="text" id="name-${jerseyCount}" placeholder="e.g. AC Milan Ronaldinho #10">
+        </div>
+        <div class="field">
+          <label>Price (₹)</label>
+          <input type="number" id="price-${jerseyCount}" placeholder="999" min="0">
+        </div>
+      </div>
+      <div class="field">
+        <label>Description (optional)</label>
+        <textarea id="desc-${jerseyCount}" placeholder="e.g. Vintage AC Milan 2002-03 home jersey"></textarea>
+      </div>
+      <div class="image-row">
+        <div class="image-field">
+          <label>Front Image URL</label>
+          <input type="text" id="front-${jerseyCount}" placeholder="https://res.cloudinary.com/..." oninput="previewImg(${jerseyCount},'front')">
+          <div class="img-preview" id="front-preview-${jerseyCount}">
+            <img id="front-img-${jerseyCount}" src="" alt="Front"><span>Front Preview</span>
+          </div>
+        </div>
+        <div class="image-field">
+          <label>Back Image URL</label>
+          <input type="text" id="back-${jerseyCount}" placeholder="https://res.cloudinary.com/..." oninput="previewImg(${jerseyCount},'back')">
+          <div class="img-preview" id="back-preview-${jerseyCount}">
+            <img id="back-img-${jerseyCount}" src="" alt="Back"><span>Back Preview</span>
+          </div>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  };
+
+  window.removeJersey = function(id) {
+    const card = document.getElementById(`jersey-${id}`);
+    if (card) card.remove();
+  };
+
+  window.previewImg = function(id, side) {
+    const url  = document.getElementById(`${side}-${id}`).value;
+    const img  = document.getElementById(`${side}-img-${id}`);
+    const span = document.querySelector(`#${side}-preview-${id} span`);
+    if (url) {
+      img.src = url; img.style.display = 'block';
+      if (span) span.style.display = 'none';
+      img.onerror = () => { img.style.display = 'none'; if (span) span.style.display = 'block'; };
+    } else {
+      img.style.display = 'none';
+      if (span) span.style.display = 'block';
+    }
+  };
+
+  window.uploadAll = async function() {
+    const cards = document.querySelectorAll('.jersey-card');
+    if (!cards.length) { alert('Add at least one jersey first!'); return; }
+
+    const jerseys = []; let hasError = false;
+    cards.forEach(card => {
+      const id    = card.id.replace('jersey-', '');
+      const name  = document.getElementById(`name-${id}`)?.value.trim();
+      const price = document.getElementById(`price-${id}`)?.value.trim();
+      const desc  = document.getElementById(`desc-${id}`)?.value.trim();
+      const front = document.getElementById(`front-${id}`)?.value.trim();
+      const back  = document.getElementById(`back-${id}`)?.value.trim();
+      if (!name || !price || !front) { card.style.outline = '2px solid #c0392b'; hasError = true; }
+      else { card.style.outline = 'none'; jerseys.push({ name, price, desc, image: front, imageBack: back || '', createdAt: Date.now() }); }
+    });
+    if (hasError) { alert('Fill in Name, Price, and Front Image for all jerseys (red outline = missing).'); return; }
+
+    const btn = document.getElementById('upload-btn');
+    const statusBar = document.getElementById('status-bar');
+    const statusTxt = document.getElementById('status-text');
+    const progress  = document.getElementById('progress-fill');
+    const countLbl  = document.getElementById('count-label');
+
+    btn.disabled = true; statusBar.style.display = 'block'; statusBar.className = 'status-bar';
+    let uploaded = 0;
+
+    for (const jersey of jerseys) {
+      try {
+        await addDoc(collection(db, 'products'), jersey);
+        uploaded++;
+        progress.style.width  = Math.round((uploaded / jerseys.length) * 100) + '%';
+        statusTxt.textContent = `Uploading... ${uploaded} of ${jerseys.length}`;
+        countLbl.textContent  = jersey.name + ' added ✓';
+      } catch(e) {
+        statusBar.className   = 'status-bar error';
+        statusTxt.textContent = `Error uploading "${jersey.name}": ${e.message}`;
+        btn.disabled = false; return;
+      }
+    }
+
+    statusBar.className   = 'status-bar success';
+    statusTxt.textContent = `✓ All ${uploaded} jerseys uploaded successfully!`;
+    countLbl.textContent  = 'View them in your Admin Panel and Products page.';
+    progress.style.width  = '100%';
+    btn.disabled = false;
+  };
+</script>
+</body>
+</html>

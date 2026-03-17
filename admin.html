@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin — Vestique</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    .gate { min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0a0a0a; }
+    .gate-box { background:#fafafa; padding:60px; width:100%; max-width:400px; text-align:center; }
+    .gate-box h2 { font-family:'Playfair Display',serif; font-size:2rem; font-weight:400; margin-bottom:6px; color:#c8a97e; }
+    .gate-box p { color:#6b6b6b; font-size:0.85rem; margin-bottom:40px; letter-spacing:1px; text-transform:uppercase; }
+    .gate-box input { width:100%; padding:14px 0; border:none; border-bottom:1px solid #e8e4e0; background:transparent; font-family:'DM Sans',sans-serif; font-size:0.95rem; margin-bottom:30px; outline:none; text-align:center; letter-spacing:1px; transition:border-color 0.3s; }
+    .gate-box input:focus { border-bottom-color:#0a0a0a; }
+    .gate-box input:disabled { opacity:0.5; }
+    .gate-box button { width:100%; padding:16px; background:#0a0a0a; color:white; border:none; font-family:'DM Sans',sans-serif; font-size:0.85rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all 0.3s; }
+    .gate-box button:hover:not(:disabled) { background:#c8a97e; color:#0a0a0a; }
+    .gate-box button:disabled { opacity:0.6; cursor:not-allowed; }
+    .gate-error { display:none; color:#c0392b; font-size:0.8rem; margin-top:14px; letter-spacing:1px; }
+    .admin-panel { display:none; }
+    .admin-wrapper { max-width:1100px; margin:0 auto; padding:60px 30px; display:grid; grid-template-columns:380px 1fr; gap:50px; align-items:start; }
+    .admin-title { font-family:'Playfair Display',serif; font-size:2.5rem; font-weight:400; padding:60px 30px 0; max-width:1100px; margin:0 auto; letter-spacing:1px; display:flex; justify-content:space-between; align-items:flex-end; }
+    .logout-btn { font-family:'DM Sans',sans-serif; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; background:none; border:none; color:#6b6b6b; cursor:pointer; padding-bottom:8px; transition:color 0.2s; }
+    .logout-btn:hover { color:#c0392b; }
+    .admin-divider { border:none; border-top:1px solid #e8e4e0; max-width:1100px; margin:20px auto 0; }
+    .add-product-panel { background:#fafafa; padding:40px; position:sticky; top:90px; }
+    .add-product-panel h3 { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:400; margin-bottom:30px; letter-spacing:1px; }
+    .form-group { margin-bottom:24px; }
+    .form-group label { display:block; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; color:#6b6b6b; margin-bottom:8px; }
+    .form-group input, .form-group textarea { width:100%; padding:12px 0; border:none; border-bottom:1px solid #e8e4e0; background:transparent; font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; transition:border-color 0.3s; color:#0a0a0a; }
+    .form-group input:focus, .form-group textarea:focus { border-bottom-color:#0a0a0a; }
+    .form-group textarea { resize:none; height:70px; }
+    .price-input-wrap { position:relative; }
+    .price-input-wrap span { position:absolute; left:0; top:12px; font-size:0.95rem; color:#c8a97e; font-weight:500; }
+    .price-input-wrap input { padding-left:20px; }
+    .image-preview { width:100%; height:160px; background:#e8e4e0; display:flex; align-items:center; justify-content:center; margin-bottom:24px; overflow:hidden; }
+    .image-preview img { width:100%; height:100%; object-fit:cover; display:none; }
+    .image-preview span { font-size:0.8rem; color:#6b6b6b; letter-spacing:1px; }
+    .add-btn { width:100%; padding:16px; background:#0a0a0a; color:white; border:none; font-family:'DM Sans',sans-serif; font-size:0.85rem; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all 0.3s; }
+    .add-btn:hover { background:#c8a97e; color:#0a0a0a; }
+    .success-msg { display:none; text-align:center; padding:12px; background:#f0f7f0; color:#2d7a2d; font-size:0.85rem; letter-spacing:1px; margin-top:12px; }
+    .products-panel h3 { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:400; margin-bottom:24px; letter-spacing:1px; display:flex; justify-content:space-between; align-items:center; }
+    .product-count { font-family:'DM Sans',sans-serif; font-size:0.85rem; color:#6b6b6b; font-weight:400; }
+    .admin-products-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:20px; }
+    .admin-product-card { background:white; position:relative; animation:fadeUp 0.4s ease forwards; opacity:0; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .admin-product-card img { width:100%; height:180px; object-fit:cover; background:#e8e4e0; display:block; }
+    .admin-product-card-info { padding:16px; }
+    .admin-product-card-info h4 { font-family:'Playfair Display',serif; font-size:1rem; font-weight:400; margin-bottom:4px; }
+    .admin-product-card-info .price { color:#c8a97e; font-size:0.95rem; font-weight:500; }
+    .admin-product-card-info .desc  { color:#6b6b6b; font-size:0.8rem; margin-top:4px; }
+    .delete-btn { position:absolute; top:10px; right:10px; width:30px; height:30px; background:#c0392b; color:white; border:none; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s; }
+    .delete-btn:hover { background:#0a0a0a; }
+    .empty-products { grid-column:1/-1; text-align:center; padding:60px 20px; color:#6b6b6b; font-size:0.9rem; border:1px dashed #e8e4e0; }
+    .loading-msg { grid-column:1/-1; text-align:center; padding:40px; color:#6b6b6b; }
+    @media (max-width:768px) { .admin-wrapper { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN GATE -->
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <h2>Vestique</h2>
+      <p>Admin Access Only</p>
+      <input type="email"    id="admin-email"    placeholder="Admin email"
+        onkeydown="if(event.key==='Enter') checkPassword()">
+      <input type="password" id="password-input" placeholder="Password"
+        onkeydown="if(event.key==='Enter') checkPassword()">
+      <button id="gate-btn" onclick="checkPassword()">Sign In</button>
+      <p class="gate-error" id="gate-error">Incorrect credentials or not an admin.</p>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="admin-panel" id="admin-panel">
+    <header>
+      <h2>Vestique</h2>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="products.html">Products</a>
+        <a href="cart.html">Cart</a>
+        <a href="login.html">Login</a>
+        <a href="admin.html" style="color:#c8a97e">Admin</a>
+      </nav>
+    </header>
+
+    <div class="admin-title">
+      Admin Panel
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    <hr class="admin-divider">
+
+    <div class="admin-wrapper">
+      <!-- ADD PRODUCT -->
+      <div class="add-product-panel">
+        <h3>Add New Product</h3>
+        <div class="image-preview" id="image-preview">
+          <img id="preview-img" src="" alt="Preview">
+          <span id="preview-placeholder">Image Preview</span>
+        </div>
+        <div class="form-group">
+          <label>Product Name</label>
+          <input type="text" id="prod-name" placeholder="e.g. Black Hoodie">
+        </div>
+        <div class="form-group">
+          <label>Price (₹)</label>
+          <div class="price-input-wrap">
+            <span>₹</span>
+            <input type="number" id="prod-price" placeholder="999" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="prod-desc" placeholder="Short product description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Front Image URL</label>
+          <input type="text" id="prod-image" placeholder="https://..." oninput="previewImage()">
+        </div>
+        <div class="form-group">
+          <label>Back Image URL (optional)</label>
+          <input type="text" id="prod-image-back" placeholder="https://...">
+        </div>
+        <button class="add-btn" onclick="addProduct()">+ Add Product</button>
+        <div class="success-msg" id="success-msg">✓ Product added successfully!</div>
+      </div>
+
+      <!-- PRODUCTS LIST -->
+      <div class="products-panel">
+        <h3>
+          All Products
+          <span class="product-count" id="product-count">0 products</span>
+        </h3>
+        <div class="admin-products-grid" id="admin-products-grid">
+          <div class="loading-msg">Loading products...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div style="max-width:1100px; margin:0 auto; padding:0 30px 80px;">
+      <div style="border-top:1px solid #e8e4e0; padding-top:50px;">
+        <h3 style="font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:400; margin-bottom:8px; letter-spacing:1px;">All Orders</h3>
+        <p style="color:#6b6b6b; font-size:0.85rem; margin-bottom:30px;">Update order statuses — changes show instantly on customer dashboard</p>
+        <div id="all-orders-list"></div>
+        <div id="no-orders-msg" style="text-align:center; padding:60px 20px; border:1px dashed #e8e4e0; color:#6b6b6b; display:none;">No orders yet</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, deleteDoc,
+      doc, getDoc, onSnapshot, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    /* ─── Init ───────────────────────────────────────────────────── */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPqTTmRHkNffvsrP6iVteokpxJ5xzQkqw",
+      authDomain: "vestique-d6b6f.firebaseapp.com",
+      projectId: "vestique-d6b6f",
+      storageBucket: "vestique-d6b6f.firebasestorage.app",
+      messagingSenderId: "517893374274",
+      appId: "1:517893374274:web:fe371519fba987cee4c8db"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const db   = getFirestore(app);
+    const auth = getAuth(app);
+
+    /* ─── Auth state listener — auto-restores session on page reload ─ */
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Check they're in the admins collection
+        const adminSnap = await getDoc(doc(db, 'admins', user.email));
+        if (adminSnap.exists()) {
+          showPanel();
+        } else {
+          // Signed in but not an admin — sign them out
+          await signOut(auth);
+          showGate();
+        }
+      } else {
+        showGate();
+      }
+    });
+
+    function showPanel() {
+      document.getElementById('gate').style.display        = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      loadProducts();
+      loadOrders();
+    }
+
+    function showGate() {
+      document.getElementById('gate').style.display        = 'flex';
+      document.getElementById('admin-panel').style.display = 'none';
+    }
+
+    /* ─── Login ──────────────────────────────────────────────────── */
+    window.checkPassword = async function() {
+      const email    = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('password-input').value;
+      const btn      = document.getElementById('gate-btn');
+      const errEl    = document.getElementById('gate-error');
+
+      if (!email || !password) return;
+
+      btn.disabled    = true;
+      btn.textContent = 'Checking…';
+      errEl.style.display = 'none';
+
+      try {
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        const user = credential.user;
+
+        // Verify they're in the admins collection
+        const adminSnap = await getDoc(doc(db, 'admins', user.email));
+        if (!adminSnap.exists()) {
+          await signOut(auth);
+          throw new Error('Not an admin');
+        }
+
+        // onAuthStateChanged will handle showing the panel
+
+      } catch (e) {
+        errEl.textContent   = 'Incorrect credentials or not an admin.';
+        errEl.style.display = 'block';
+        btn.disabled    = false;
+        btn.textContent = 'Sign In';
+      }
+    };
+
+    /* ─── Logout ─────────────────────────────────────────────────── */
+    window.logout = async function() {
+      await signOut(auth);
+      showGate();
+    };
+
+    /* ─── Products ───────────────────────────────────────────────── */
+    window.previewImage = function() {
+      const url         = document.getElementById('prod-image').value;
+      const img         = document.getElementById('preview-img');
+      const placeholder = document.getElementById('preview-placeholder');
+      if (url) { img.src = url; img.style.display = 'block'; placeholder.style.display = 'none'; }
+      else     { img.style.display = 'none'; placeholder.style.display = 'block'; }
+    };
+
+    window.addProduct = async function() {
+      const name      = document.getElementById('prod-name').value.trim();
+      const price     = document.getElementById('prod-price').value.trim();
+      const desc      = document.getElementById('prod-desc').value.trim();
+      const image     = document.getElementById('prod-image').value.trim();
+      const imageBack = document.getElementById('prod-image-back').value.trim();
+
+      if (!name || !price) { alert('Please enter at least a product name and price!'); return; }
+
+      try {
+        await addDoc(collection(db, 'products'), {
+          name, price, desc,
+          image:     image     || 'https://placehold.co/200x300',
+          imageBack: imageBack || '',
+          createdAt: Date.now()
+        });
+
+        const msg = document.getElementById('success-msg');
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 3000);
+
+        ['prod-name','prod-price','prod-desc','prod-image','prod-image-back']
+          .forEach(id => document.getElementById(id).value = '');
+        document.getElementById('preview-img').style.display         = 'none';
+        document.getElementById('preview-placeholder').style.display = 'block';
+      } catch(e) {
+        alert('Error adding product: ' + e.message);
+      }
+    };
+
+    function loadProducts() {
+      const grid = document.getElementById('admin-products-grid');
+      grid.innerHTML = '<div class="loading-msg">Loading products...</div>';
+
+      onSnapshot(collection(db, 'products'), (snapshot) => {
+        grid.innerHTML = '';
+        if (snapshot.empty) {
+          grid.innerHTML = '<div class="empty-products">No products yet. Add your first product!</div>';
+          document.getElementById('product-count').textContent = '0 products';
+          return;
+        }
+
+        snapshot.forEach(docSnap => {
+          const p    = { id: docSnap.id, ...docSnap.data() };
+          const card = document.createElement('div');
+          card.className = 'admin-product-card';
+
+          // Use textContent for name/price/desc to prevent XSS
+          const img = document.createElement('img');
+          img.src = p.image;
+          img.alt = p.name;
+          img.onerror = () => img.src = 'https://placehold.co/200x300';
+
+          const info = document.createElement('div');
+          info.className = 'admin-product-card-info';
+
+          const h4 = document.createElement('h4');
+          h4.textContent = p.name;
+
+          const pPrice = document.createElement('p');
+          pPrice.className = 'price';
+          pPrice.textContent = '₹' + p.price;
+
+          info.appendChild(h4);
+          info.appendChild(pPrice);
+
+          if (p.desc) {
+            const pDesc = document.createElement('p');
+            pDesc.className = 'desc';
+            pDesc.textContent = p.desc;
+            info.appendChild(pDesc);
+          }
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'delete-btn';
+          delBtn.title = 'Delete';
+          delBtn.textContent = '✕';
+          delBtn.onclick = () => deleteProduct(p.id);
+
+          card.appendChild(img);
+          card.appendChild(info);
+          card.appendChild(delBtn);
+          grid.appendChild(card);
+        });
+
+        const count = snapshot.size;
+        document.getElementById('product-count').textContent = count + ' product' + (count !== 1 ? 's' : '');
+      });
+    }
+
+    window.deleteProduct = async function(id) {
+      if (!confirm('Delete this product?')) return;
+      try { await deleteDoc(doc(db, 'products', id)); }
+      catch(e) { alert('Error deleting: ' + e.message); }
+    };
+
+    /* ─── Orders ─────────────────────────────────────────────────── */
+    function loadOrders() {
+      const container = document.getElementById('all-orders-list');
+      const noOrders  = document.getElementById('no-orders-msg');
+      container.innerHTML = '<p style="color:#6b6b6b; padding:20px;">Loading orders...</p>';
+
+      onSnapshot(collection(db, 'orders'), (snapshot) => {
+        container.innerHTML = '';
+
+        if (snapshot.empty) { noOrders.style.display = 'block'; return; }
+        noOrders.style.display = 'none';
+
+        const allOrders = [];
+        snapshot.forEach(d => allOrders.push({ firestoreId: d.id, ...d.data() }));
+        allOrders.sort((a, b) => b.createdAt - a.createdAt);
+
+        allOrders.forEach(order => {
+          const div = document.createElement('div');
+          div.style.cssText = 'background:#fafafa; padding:24px 30px; margin-bottom:16px; display:grid; grid-template-columns:1fr auto; gap:20px; align-items:start;';
+          div.innerHTML = `
+            <div>
+              <p style="font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; color:#6b6b6b; margin-bottom:6px;">
+                Order #${order.id} — ${order.date}
+              </p>
+              <p style="font-family:'Playfair Display',serif; font-size:1rem; margin-bottom:4px;">
+                ${order.items.map(i => i.name + ' x' + i.qty).join(', ')}
+              </p>
+              <p style="color:#c8a97e; font-weight:500; margin-bottom:4px;">₹${order.total.toLocaleString('en-IN')}</p>
+              <p style="font-size:0.82rem; color:#6b6b6b;">📧 ${order.email}</p>
+              <p style="font-size:0.82rem; color:#6b6b6b;">📞 ${order.phone || '—'}</p>
+              <p style="font-size:0.82rem; color:#6b6b6b;">📍 ${order.address}</p>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:12px;">
+              <select onchange="updateOrderStatus('${order.firestoreId}', this.value)"
+                style="padding:10px 16px; border:1px solid #e8e4e0; background:white;
+                       font-family:'DM Sans',sans-serif; font-size:0.8rem; outline:none; cursor:pointer;">
+                <option value="Processing" ${order.status==='Processing'?'selected':''}>Processing</option>
+                <option value="Confirmed"  ${order.status==='Confirmed' ?'selected':''}>Confirmed</option>
+                <option value="Shipped"    ${order.status==='Shipped'   ?'selected':''}>Shipped</option>
+                <option value="Delivered"  ${order.status==='Delivered' ?'selected':''}>Delivered</option>
+                <option value="Cancelled"  ${order.status==='Cancelled' ?'selected':''}>Cancelled</option>
+              </select>
+              <span style="font-size:0.7rem; letter-spacing:2px; text-transform:uppercase;
+                           padding:6px 14px; background:${getStatusColor(order.status)}; color:white;">
+                ${order.status}
+              </span>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    function getStatusColor(s) {
+      return { Processing:'#6b6b6b', Confirmed:'#c8a97e', Shipped:'#2980b9', Delivered:'#2d7a2d', Cancelled:'#c0392b' }[s] || '#6b6b6b';
+    }
+
+    window.updateOrderStatus = async function(firestoreId, newStatus) {
+      try { await updateDoc(doc(db, 'orders', firestoreId), { status: newStatus }); }
+      catch(e) { alert('Error updating: ' + e.message); }
+    };
+  </script>
+
+</body>
+</html>

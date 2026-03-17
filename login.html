@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login — Vestique</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a0a0a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header { background: #0a0a0a; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    header h2 { color: #c8a97e; }
+    nav a { color: rgba(255,255,255,0.6); }
+    nav a:hover { color: #c8a97e; }
+
+    .login-wrapper {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - 70px);
+    }
+
+    .login-left {
+      background: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 80px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-left::before {
+      content: 'V';
+      position: absolute;
+      font-family: 'Playfair Display', serif;
+      font-size: 40rem;
+      color: rgba(255,255,255,0.02);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .brand-label   { font-size: 0.7rem; letter-spacing: 6px; text-transform: uppercase; color: #c8a97e; margin-bottom: 24px; }
+    .brand-title   { font-family: 'Playfair Display', serif; font-size: 4rem; font-weight: 400; color: #fafafa; letter-spacing: 4px; margin-bottom: 24px; text-align: center; }
+    .brand-divider { width: 40px; height: 1px; background: #c8a97e; margin: 0 auto 24px; }
+    .brand-tagline { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; color: rgba(255,255,255,0.4); text-align: center; letter-spacing: 1px; }
+
+    .login-right { background: #f5f0eb; display: flex; align-items: center; justify-content: center; padding: 80px 60px; }
+    .login-box    { width: 100%; max-width: 400px; }
+
+    .tabs { display: flex; margin-bottom: 48px; border-bottom: 1px solid #e8e4e0; }
+
+    .tab {
+      flex: 1; text-align: center; padding: 12px;
+      font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; color: #6b6b6b;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all 0.3s;
+    }
+    .tab.active { color: #0a0a0a; border-bottom-color: #c8a97e; }
+
+    .form-section        { display: none; }
+    .form-section.active { display: block; }
+
+    .form-title    { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; margin-bottom: 8px; color: #0a0a0a; }
+    .form-subtitle { color: #6b6b6b; font-size: 0.85rem; margin-bottom: 40px; }
+
+    .field { margin-bottom: 28px; position: relative; }
+
+    .field label { display: block; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: #6b6b6b; margin-bottom: 10px; }
+
+    .field input {
+      width: 100%; padding: 12px 0;
+      border: none; border-bottom: 1px solid #d0cbc5;
+      background: transparent; font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem; color: #0a0a0a; outline: none;
+      transition: border-color 0.3s;
+    }
+    .field input:focus    { border-bottom-color: #0a0a0a; }
+    .field input:disabled { opacity: 0.5; }
+
+    .field .error-msg { display: none; color: #c0392b; font-size: 0.75rem; margin-top: 6px; letter-spacing: 0.5px; }
+
+    .submit-btn {
+      width: 100%; padding: 16px;
+      background: #0a0a0a; color: white; border: none;
+      font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+      letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.3s; margin-top: 8px;
+    }
+    .submit-btn:hover:not(:disabled) { background: #c8a97e; color: #0a0a0a; }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .switch-text { text-align: center; margin-top: 24px; font-size: 0.82rem; color: #6b6b6b; }
+    .switch-text span { color: #0a0a0a; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+    .switch-text span:hover { color: #c8a97e; }
+
+    .success-state {
+      display: none; text-align: center; padding: 40px 0;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .success-icon {
+      width: 60px; height: 60px;
+      border: 1px solid #c8a97e; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px; font-size: 1.5rem; color: #c8a97e;
+    }
+
+    .success-state h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 400; margin-bottom: 8px; }
+    .success-state p  { color: #6b6b6b; font-size: 0.85rem; margin-bottom: 32px; }
+
+    .success-state a {
+      display: inline-block; padding: 14px 40px;
+      background: #0a0a0a; color: white; text-decoration: none;
+      font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;
+      transition: all 0.3s;
+    }
+    .success-state a:hover { background: #c8a97e; color: #0a0a0a; }
+
+    @media (max-width: 768px) {
+      .login-wrapper { grid-template-columns: 1fr; }
+      .login-left    { display: none; }
+      .login-right   { padding: 60px 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>Vestique</h2>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cart.html">Cart</a>
+      <a href="login.html">Login</a>
+      <a href="dashboard.html">My Account</a>
+      <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+    </nav>
+  </header>
+  <script>
+    if (sessionStorage.getItem("admin-auth") === "true") {
+      document.getElementById("admin-link").style.display = "inline";
+    }
+  </script>
+
+  <div class="login-wrapper">
+
+    <div class="login-left">
+      <p class="brand-label">Welcome to</p>
+      <h1 class="brand-title">Vestique</h1>
+      <div class="brand-divider"></div>
+      <p class="brand-tagline">Modern Streetwear, Everyday Style</p>
+    </div>
+
+    <div class="login-right">
+      <div class="login-box">
+
+        <div class="tabs">
+          <div class="tab active" id="tab-login"  onclick="switchTab('login')">Sign In</div>
+          <div class="tab"        id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+        </div>
+
+        <!-- SUCCESS -->
+        <div class="success-state" id="success-state">
+          <div class="success-icon">✓</div>
+          <h3 id="success-title">Welcome back!</h3>
+          <p  id="success-msg">You're now signed in to Vestique.</p>
+          <a href="products.html">Shop Now</a>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="form-section active" id="form-login">
+          <h2 class="form-title">Sign In</h2>
+          <p class="form-subtitle">Welcome back to Vestique</p>
+
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="login-email" placeholder="your@email.com">
+            <p class="error-msg" id="login-email-err">Please enter a valid email</p>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="login-password" placeholder="••••••••">
+            <p class="error-msg" id="login-pass-err">Incorrect email or password</p>
+          </div>
+
+          <button class="submit-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+          <p class="switch-text">Don't have an account? <span onclick="switchTab('signup')">Create one</span></p>
+        </div>
+
+        <!-- SIGNUP -->
+        <div class="form-section" id="form-signup">
+          <h2 class="form-title">Create Account</h2>
+          <p class="form-subtitle">Join the Vestique community</p>
+
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" id="signup-name" placeholder="Your name">
+            <p class="error-msg" id="signup-name-err">Please enter your name</p>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="signup-email" placeholder="your@email.com">
+            <p class="error-msg" id="signup-email-err">Please enter a valid email</p>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="signup-password" placeholder="Min. 6 characters">
+            <p class="error-msg" id="signup-pass-err">Password must be at least 6 characters</p>
+          </div>
+
+          <button class="submit-btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
+          <p class="switch-text">Already have an account? <span onclick="switchTab('login')">Sign in</span></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp }                                   from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getFirestore, doc, getDoc, setDoc, deleteDoc }   from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      updateProfile
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+    /* ─── Init ───────────────────────────────────────────────────── */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPqTTmRHkNffvsrP6iVteokpxJ5xzQkqw",
+      authDomain: "vestique-d6b6f.firebaseapp.com",
+      projectId: "vestique-d6b6f",
+      storageBucket: "vestique-d6b6f.firebasestorage.app",
+      messagingSenderId: "517893374274",
+      appId: "1:517893374274:web:fe371519fba987cee4c8db"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    /* ─── Guest cart merge ───────────────────────────────────────── */
+    async function mergeGuestCart(userEmail) {
+      const guestId = localStorage.getItem('vestique-guest-id');
+      if (!guestId) return;
+
+      const guestRef  = doc(db, 'carts', guestId);
+      const guestSnap = await getDoc(guestRef);
+      if (!guestSnap.exists()) return;
+
+      const guestItems = guestSnap.data().items || [];
+      if (!guestItems.length) return;
+
+      const userCartId  = 'user_' + userEmail.replace(/[.@]/g, '_');
+      const userCartRef = doc(db, 'carts', userCartId);
+      const userSnap    = await getDoc(userCartRef);
+      let   userItems   = userSnap.exists() ? (userSnap.data().items || []) : [];
+
+      guestItems.forEach(g => {
+        const existing = userItems.find(i => i.cartKey === g.cartKey);
+        if (existing) existing.qty += g.qty;
+        else userItems.push(g);
+      });
+
+      await setDoc(userCartRef, { items: userItems, cartId: userCartId, updatedAt: Date.now() });
+      await deleteDoc(guestRef);
+      localStorage.removeItem('vestique-guest-id');
+    }
+
+    /* ─── UI helpers ─────────────────────────────────────────────── */
+    function hideErrors() {
+      document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
+    }
+
+    function setLoading(btnId, loading, defaultLabel) {
+      const btn = document.getElementById(btnId);
+      btn.disabled    = loading;
+      btn.textContent = loading ? 'Please wait…' : defaultLabel;
+      document.querySelectorAll('.field input').forEach(i => i.disabled = loading);
+    }
+
+    /* ─── Login ──────────────────────────────────────────────────── */
+    window.handleLogin = async function() {
+      hideErrors();
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      let valid = true;
+
+      if (!email || !email.includes('@')) {
+        document.getElementById('login-email-err').style.display = 'block'; valid = false;
+      }
+      if (!password) {
+        document.getElementById('login-pass-err').style.display = 'block'; valid = false;
+      }
+      if (!valid) return;
+
+      setLoading('login-btn', true, 'Sign In');
+
+      try {
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        const user       = credential.user;
+
+        // Cache name + email in localStorage for cart ID and checkout pre-fill
+        localStorage.setItem('vestique-current-user', JSON.stringify({
+          name:  user.displayName || email.split('@')[0],
+          email: user.email
+        }));
+
+        await mergeGuestCart(user.email);
+        window.location.href = 'products.html';
+
+      } catch (e) {
+        const msg = (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
+          ? 'Incorrect email or password'
+          : 'Something went wrong. Please try again.';
+        document.getElementById('login-pass-err').textContent    = msg;
+        document.getElementById('login-pass-err').style.display  = 'block';
+      } finally {
+        setLoading('login-btn', false, 'Sign In');
+      }
+    };
+
+    /* ─── Signup ─────────────────────────────────────────────────── */
+    window.handleSignup = async function() {
+      hideErrors();
+      const name     = document.getElementById('signup-name').value.trim();
+      const email    = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      let valid = true;
+
+      if (!name)                    { document.getElementById('signup-name-err').style.display  = 'block'; valid = false; }
+      if (!email || !email.includes('@')) { document.getElementById('signup-email-err').style.display = 'block'; valid = false; }
+      if (password.length < 6)     { document.getElementById('signup-pass-err').style.display  = 'block'; valid = false; }
+      if (!valid) return;
+
+      setLoading('signup-btn', true, 'Create Account');
+
+      try {
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+
+        // Store display name in Firebase Auth profile
+        await updateProfile(credential.user, { displayName: name });
+
+        // Cache in localStorage
+        localStorage.setItem('vestique-current-user', JSON.stringify({ name, email }));
+
+        await mergeGuestCart(email);
+        window.location.href = 'products.html';
+
+      } catch (e) {
+        let msg = 'Something went wrong. Please try again.';
+        if (e.code === 'auth/email-already-in-use') msg = 'This email is already registered';
+        if (e.code === 'auth/invalid-email')        msg = 'Please enter a valid email';
+        document.getElementById('signup-email-err').textContent   = msg;
+        document.getElementById('signup-email-err').style.display = 'block';
+      } finally {
+        setLoading('signup-btn', false, 'Create Account');
+      }
+    };
+
+    /* ─── Tab switch ─────────────────────────────────────────────── */
+    window.switchTab = function(tab) {
+      document.getElementById('tab-login').classList.toggle('active',   tab === 'login');
+      document.getElementById('tab-signup').classList.toggle('active',  tab === 'signup');
+      document.getElementById('form-login').classList.toggle('active',  tab === 'login');
+      document.getElementById('form-signup').classList.toggle('active', tab === 'signup');
+      document.getElementById('success-state').style.display = 'none';
+      hideErrors();
+    };
+  </script>
+
+  <div id="admin-gear" onclick="window.location.href='admin.html'"
+    style="display:none; position:fixed; bottom:24px; right:24px; width:44px; height:44px;
+           background:#0a0a0a; color:#c8a97e; border-radius:50%; cursor:pointer; font-size:1.2rem;
+           align-items:center; justify-content:center; z-index:999;
+           box-shadow:0 4px 16px rgba(0,0,0,0.2); transition:transform 0.3s;">⚙</div>
+</body>
+</html>

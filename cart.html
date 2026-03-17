@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cart — Vestique</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    .cart-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 30px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 50px;
+      align-items: start;
+    }
+
+    .cart-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 400;
+      padding: 60px 30px 0;
+      max-width: 1100px;
+      margin: 0 auto;
+      letter-spacing: 1px;
+    }
+
+    .cart-divider {
+      border: none;
+      border-top: 1px solid #e8e4e0;
+      max-width: 1100px;
+      margin: 20px auto 0;
+    }
+
+    .cart-items { display: flex; flex-direction: column; }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 24px;
+      align-items: center;
+      padding: 30px 0;
+      border-bottom: 1px solid #e8e4e0;
+      animation: fadeIn 0.4s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cart-item img {
+      width: 120px;
+      height: 150px;
+      object-fit: cover;
+      background: #e8e4e0;
+      display: block;
+    }
+
+    .cart-item-info h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-bottom: 6px;
+    }
+
+    .cart-item-info .item-price {
+      color: #c8a97e;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      border: 1px solid #e8e4e0;
+      width: fit-content;
+    }
+
+    .quantity-control button {
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: #0a0a0a;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .quantity-control button:hover { background: #f5f0eb; }
+
+    .quantity-control span {
+      width: 40px;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border-left: 1px solid #e8e4e0;
+      border-right: 1px solid #e8e4e0;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-item-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 16px;
+    }
+
+    .item-total {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+    }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: #6b6b6b;
+      cursor: pointer;
+      font-size: 0.75rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 0;
+      transition: color 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .remove-btn:hover { color: #c0392b; }
+
+    .empty-cart {
+      display: none;
+      text-align: center;
+      padding: 100px 20px;
+      grid-column: 1 / -1;
+    }
+
+    .empty-cart h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .empty-cart p { color: #6b6b6b; margin-bottom: 30px; }
+
+    .empty-cart a {
+      display: inline-block;
+      padding: 14px 40px;
+      background: #0a0a0a;
+      color: #fafafa;
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: background 0.3s;
+    }
+
+    .empty-cart a:hover { background: #c8a97e; color: #0a0a0a; }
+
+    .order-summary {
+      background: #fafafa;
+      padding: 40px;
+      position: sticky;
+      top: 90px;
+    }
+
+    .order-summary h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      color: #6b6b6b;
+    }
+
+    .summary-row.total {
+      border-top: 1px solid #e8e4e0;
+      padding-top: 20px;
+      margin-top: 10px;
+      font-size: 1.1rem;
+      color: #0a0a0a;
+      font-weight: 500;
+    }
+
+    .summary-row.total span:last-child {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+    }
+
+    .promo-input { display: flex; margin: 24px 0; }
+
+    .promo-input input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #e8e4e0;
+      border-right: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      background: white;
+    }
+
+    .promo-input button {
+      padding: 12px 20px;
+      background: #0a0a0a;
+      color: white;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .promo-input button:hover { background: #c8a97e; color: #0a0a0a; }
+
+    .checkout-btn {
+      width: 100%;
+      padding: 18px;
+      background: #0a0a0a;
+      color: white;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    .checkout-btn:hover { background: #c8a97e; color: #0a0a0a; transform: translateY(-2px); }
+
+    .continue-shopping {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      color: #6b6b6b;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .continue-shopping:hover { color: #0a0a0a; }
+
+    /* Loading state */
+    .cart-loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: #6b6b6b;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      grid-column: 1 / -1;
+    }
+
+    .cart-loading::after {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 32px;
+      border: 2px solid #e8e4e0;
+      border-top-color: #c8a97e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 16px auto 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* CHECKOUT MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: #f5f0eb;
+      padding: 60px;
+      width: 100%;
+      max-width: 500px;
+      position: relative;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .modal p.subtitle {
+      color: #6b6b6b;
+      font-size: 0.85rem;
+      margin-bottom: 36px;
+    }
+
+    .modal .field { margin-bottom: 24px; }
+
+    .modal .field label {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #6b6b6b;
+      margin-bottom: 8px;
+    }
+
+    .modal .field input {
+      width: 100%;
+      padding: 12px 0;
+      border: none;
+      border-bottom: 1px solid #d0cbc5;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .modal .field input:focus { border-bottom-color: #0a0a0a; }
+
+    .modal-total {
+      background: #0a0a0a;
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    .modal-total span:last-child {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      color: #c8a97e;
+    }
+
+    .place-order-btn {
+      width: 100%;
+      padding: 16px;
+      background: #c8a97e;
+      color: #0a0a0a;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+
+    .place-order-btn:hover:not(:disabled) { background: #0a0a0a; color: white; }
+    .place-order-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #6b6b6b;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover { color: #0a0a0a; }
+
+    /* SUCCESS OVERLAY */
+    .success-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0a;
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .success-overlay.show { display: flex; }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      border: 1px solid #c8a97e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #c8a97e;
+      margin-bottom: 30px;
+      animation: pop 0.5s ease;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    .success-overlay h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 400;
+      color: white;
+      margin-bottom: 12px;
+    }
+
+    .success-overlay p {
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+    }
+
+    .success-overlay .order-num {
+      color: #c8a97e;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+
+    .success-overlay a {
+      display: inline-block;
+      padding: 14px 40px;
+      background: #c8a97e;
+      color: #0a0a0a;
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      transition: all 0.3s;
+      font-weight: 500;
+      margin: 6px;
+    }
+
+    .success-overlay a:hover { background: white; }
+
+    @media (max-width: 768px) {
+      .cart-page { grid-template-columns: 1fr; }
+      .cart-item { grid-template-columns: 90px 1fr; }
+      .cart-item-right { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; }
+      .modal { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>Vestique</h2>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+      <a href="login.html">Login</a>
+      <a href="dashboard.html">My Account</a>
+      <a href="admin.html" id="admin-link" style="display:none">Admin</a>
+    </nav>
+  </header>
+  <script>
+    if (sessionStorage.getItem("admin-auth") === "true") {
+      document.getElementById("admin-link").style.display = "inline";
+    }
+  </script>
+
+  <h2 class="cart-title">Your Cart</h2>
+  <hr class="cart-divider">
+
+  <div class="cart-page">
+    <div class="cart-loading" id="cart-loading">Loading your cart…</div>
+    <div class="cart-items" id="cart-items" style="display:none;"></div>
+    <div class="empty-cart" id="empty-cart">
+      <h3>Your cart is empty</h3>
+      <p>Looks like you haven't added anything yet.</p>
+      <a href="products.html">Shop Now</a>
+    </div>
+    <div class="order-summary" id="order-summary" style="display:none;">
+      <h3>Order Summary</h3>
+      <div class="summary-row"><span>Subtotal</span><span id="subtotal">₹0</span></div>
+      <div class="summary-row"><span>Shipping</span><span>Free</span></div>
+      <div class="promo-input">
+        <input type="text" placeholder="Promo code">
+        <button>Apply</button>
+      </div>
+      <div class="summary-row total"><span>Total</span><span id="grand-total">₹0</span></div>
+      <button class="checkout-btn" onclick="window.openCheckout()">Checkout</button>
+      <a href="products.html" class="continue-shopping">← Continue Shopping</a>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="modal-overlay" id="checkout-modal">
+    <div class="modal">
+      <button class="modal-close" onclick="window.closeCheckout()">✕</button>
+      <h3>Checkout</h3>
+      <p class="subtitle">Fill in your delivery details</p>
+
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="checkout-name" placeholder="Your full name">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="checkout-email" placeholder="your@email.com">
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="tel" id="checkout-phone" placeholder="+91 00000 00000">
+      </div>
+      <div class="field">
+        <label>Delivery Address</label>
+        <input type="text" id="checkout-address" placeholder="Street, City, State, PIN">
+      </div>
+
+      <div class="modal-total">
+        <span>Order Total</span>
+        <span id="modal-total">₹0</span>
+      </div>
+
+      <button class="place-order-btn" id="place-order-btn" onclick="window.placeOrder()">Place Order</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS OVERLAY -->
+  <div class="success-overlay" id="success-overlay">
+    <div class="success-icon">✓</div>
+    <h2>Order Placed!</h2>
+    <p>Thank you for shopping with Vestique</p>
+    <p>A confirmation email has been sent to you</p>
+    <p class="order-num" id="success-order-num">Order #000000</p>
+    <a id="track-order-link" href="tracking.html">Track Order</a>
+    <a href="products.html">Continue Shopping</a>
+    <a href="dashboard.html">View Dashboard</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp }        from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      deleteDoc,
+      collection,
+      addDoc
+    } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    /* ─── Firebase ───────────────────────────────────────────────── */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPqTTmRHkNffvsrP6iVteokpxJ5xzQkqw",
+      authDomain: "vestique-d6b6f.firebaseapp.com",
+      projectId: "vestique-d6b6f",
+      storageBucket: "vestique-d6b6f.firebasestorage.app",
+      messagingSenderId: "517893374274",
+      appId: "1:517893374274:web:fe371519fba987cee4c8db"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    /* ─── EmailJS init ───────────────────────────────────────────── */
+    // Replace these with your EmailJS credentials (see setup instructions)
+    const EMAILJS_PUBLIC_KEY  = 'YOUR_EMAILJS_PUBLIC_KEY';
+    const EMAILJS_SERVICE_ID  = 'YOUR_EMAILJS_SERVICE_ID';
+    const EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID';
+
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    /* ─── Cart ID ────────────────────────────────────────────────── */
+    function getCartId() {
+      const user = JSON.parse(localStorage.getItem('vestique-current-user') || 'null');
+      if (user && user.email) return 'user_' + user.email.replace(/[.@]/g, '_');
+      let guestId = localStorage.getItem('vestique-guest-id');
+      if (!guestId) {
+        guestId = 'guest_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('vestique-guest-id', guestId);
+      }
+      return guestId;
+    }
+
+    const CART_ID = getCartId();
+    const cartRef = doc(db, 'carts', CART_ID);
+    let   cartItems = [];
+
+    /* ─── Firestore helpers ──────────────────────────────────────── */
+    async function loadCart() {
+      try {
+        const snap = await getDoc(cartRef);
+        cartItems  = snap.exists() ? (snap.data().items || []) : [];
+      } catch (e) { cartItems = []; }
+    }
+
+    async function saveCart() {
+      try {
+        if (cartItems.length === 0) await deleteDoc(cartRef);
+        else await setDoc(cartRef, { items: cartItems, cartId: CART_ID, updatedAt: Date.now() });
+      } catch (e) { console.error(e); }
+    }
+
+    async function clearCart() {
+      cartItems = [];
+      try { await deleteDoc(cartRef); } catch (e) {}
+    }
+
+    /* ─── Render ─────────────────────────────────────────────────── */
+    function renderCart() {
+      const container    = document.getElementById('cart-items');
+      const emptyCart    = document.getElementById('empty-cart');
+      const orderSummary = document.getElementById('order-summary');
+      const loading      = document.getElementById('cart-loading');
+
+      loading.style.display   = 'none';
+      container.style.display = 'flex';
+      container.innerHTML     = '';
+
+      if (cartItems.length === 0) {
+        emptyCart.style.display    = 'block';
+        orderSummary.style.display = 'none';
+        document.getElementById('cart-count').textContent = '0';
+        return;
+      }
+
+      emptyCart.style.display    = 'none';
+      orderSummary.style.display = 'block';
+
+      cartItems.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.id = 'cart-item-' + index;
+        div.style.animationDelay = (index * 0.1) + 's';
+        div.innerHTML = `
+          <img src="${item.image}" alt="${item.name}" onerror="this.src='https://placehold.co/120x150'">
+          <div class="cart-item-info">
+            <h3>${item.name}</h3>
+            <p class="item-price">₹${item.price.toLocaleString('en-IN')}</p>
+            <div class="quantity-control">
+              <button onclick="window.changeQty(${index}, -1)">−</button>
+              <span id="qty-${index}">${item.qty}</span>
+              <button onclick="window.changeQty(${index}, 1)">+</button>
+            </div>
+          </div>
+          <div class="cart-item-right">
+            <span class="item-total" id="total-${index}">₹${(item.price * item.qty).toLocaleString('en-IN')}</span>
+            <button class="remove-btn" onclick="window.removeItem(${index})">Remove</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      updateSummary();
+    }
+
+    window.changeQty = async function(index, change) {
+      cartItems[index].qty = Math.max(1, cartItems[index].qty + change);
+      document.getElementById('qty-' + index).textContent   = cartItems[index].qty;
+      document.getElementById('total-' + index).textContent =
+        '₹' + (cartItems[index].price * cartItems[index].qty).toLocaleString('en-IN');
+      updateSummary();
+      await saveCart();
+    };
+
+    window.removeItem = async function(index) {
+      const item = document.getElementById('cart-item-' + index);
+      item.style.opacity    = '0';
+      item.style.transform  = 'translateX(-20px)';
+      item.style.transition = 'all 0.3s ease';
+      setTimeout(async () => {
+        cartItems.splice(index, 1);
+        await saveCart();
+        renderCart();
+      }, 300);
+    };
+
+    function updateSummary() {
+      const total = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+      document.getElementById('subtotal').textContent    = '₹' + total.toLocaleString('en-IN');
+      document.getElementById('grand-total').textContent = '₹' + total.toLocaleString('en-IN');
+      document.getElementById('modal-total').textContent = '₹' + total.toLocaleString('en-IN');
+      document.getElementById('cart-count').textContent  =
+        cartItems.reduce((sum, item) => sum + item.qty, 0);
+    }
+
+    /* ─── Checkout ───────────────────────────────────────────────── */
+    window.openCheckout = function() {
+      const user = JSON.parse(localStorage.getItem('vestique-current-user') || 'null');
+      if (user) {
+        document.getElementById('checkout-name').value  = user.name  || '';
+        document.getElementById('checkout-email').value = user.email || '';
+      }
+      document.getElementById('checkout-modal').classList.add('show');
+    };
+
+    window.closeCheckout = function() {
+      document.getElementById('checkout-modal').classList.remove('show');
+    };
+
+    /* ─── Place order ────────────────────────────────────────────── */
+    window.placeOrder = async function() {
+      const name    = document.getElementById('checkout-name').value.trim();
+      const email   = document.getElementById('checkout-email').value.trim();
+      const phone   = document.getElementById('checkout-phone').value.trim();
+      const address = document.getElementById('checkout-address').value.trim();
+
+      if (!name || !email || !phone || !address) {
+        alert('Please fill in all fields!');
+        return;
+      }
+
+      const btn = document.getElementById('place-order-btn');
+      btn.disabled    = true;
+      btn.textContent = 'Placing Order…';
+
+      const orderId = Date.now().toString().slice(-6);
+      const total   = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const order   = {
+        id: orderId,
+        name, email, phone, address,
+        items: cartItems,
+        total,
+        date: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }),
+        status:    'Processing',
+        createdAt: Date.now()
+      };
+
+      try {
+        // Save order to Firestore
+        await addDoc(collection(db, 'orders'), order);
+
+        // Clear cart
+        await clearCart();
+
+        // Send confirmation email via EmailJS
+        try {
+          const itemsList = order.items
+            .map(item => `${item.name} × ${item.qty}  —  ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
+            .join('\n');
+
+          await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_name:    name,
+            to_email:   email,
+            order_id:   orderId,
+            order_date: order.date,
+            items_list: itemsList,
+            order_total:'₹' + total.toLocaleString('en-IN'),
+            address:    address,
+            phone:      phone,
+            track_url:  window.location.origin + '/tracking.html?order=' + orderId
+          });
+        } catch (emailErr) {
+          // Email failure is non-fatal — order is already saved
+          console.warn('Email send failed:', emailErr);
+        }
+
+        // WhatsApp message
+        const itemsWA = order.items
+          .map(item => `• ${item.name} x${item.qty} = ₹${(item.price * item.qty).toLocaleString('en-IN')}`)
+          .join('\n');
+        const message =
+          `🛍️ *New Order from Vestique*\n\n*Order #${orderId}*\n\n` +
+          `*Customer:*\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nAddress: ${address}\n\n` +
+          `*Items:*\n${itemsWA}\n\n*Total: ₹${total.toLocaleString('en-IN')}*`;
+
+        const whatsappURL = `https://wa.me/917306185218?text=${encodeURIComponent(message)}`;
+
+        window.closeCheckout();
+        document.getElementById('success-order-num').textContent = 'Order #' + orderId;
+        document.getElementById('track-order-link').href = 'tracking.html?order=' + orderId;
+        document.getElementById('success-overlay').classList.add('show');
+        setTimeout(() => { window.open(whatsappURL, '_blank'); }, 1500);
+
+      } catch (e) {
+        console.error(e);
+        alert('Something went wrong. Please try again.');
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Place Order';
+      }
+    };
+
+    if (sessionStorage.getItem('admin-auth') === 'true') {
+      document.getElementById('admin-link').style.display = 'inline';
+      const gear = document.getElementById('admin-gear');
+      if (gear) gear.style.display = 'flex';
+    }
+
+    (async () => {
+      await loadCart();
+      renderCart();
+    })();
+  </script>
+
+  <div id="admin-gear" onclick="window.location.href='admin.html'"
+    style="display:none; position:fixed; bottom:24px; right:24px; width:44px; height:44px;
+           background:#0a0a0a; color:#c8a97e; border-radius:50%; cursor:pointer; font-size:1.2rem;
+           align-items:center; justify-content:center; z-index:999;
+           box-shadow:0 4px 16px rgba(0,0,0,0.2); transition:transform 0.3s;">⚙</div>
+</body>
+</html>
