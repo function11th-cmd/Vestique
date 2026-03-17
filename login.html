@@ -101,6 +101,18 @@
     .submit-btn:hover:not(:disabled) { background: #c8a97e; color: #0a0a0a; }
     .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+    .google-btn {
+      width: 100%; padding: 12px 16px;
+      background: #fff; color: #757575; border: 1px solid #dadce0;
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      letter-spacing: 0.5px; text-transform: none;
+      cursor: pointer; transition: all 0.3s; margin-top: 8px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px;
+    }
+    .google-btn:hover:not(:disabled) { background: #f8f9fa; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .switch-text { text-align: center; margin-top: 24px; font-size: 0.82rem; color: #6b6b6b; }
     .switch-text span { color: #0a0a0a; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
     .switch-text span:hover { color: #c8a97e; }
@@ -170,65 +182,16 @@
 
     <div class="login-right">
       <div class="login-box">
-
-        <div class="tabs">
-          <div class="tab active" id="tab-login"  onclick="switchTab('login')">Sign In</div>
-          <div class="tab"        id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+        <div style="text-align: center;">
+          <h2 class="form-title">Welcome</h2>
+          <p class="form-subtitle">Sign in with your Google account</p>
+          <div style="margin-top: 40px;">
+            <button class="google-btn" id="google-btn" onclick="handleGoogleLogin('google-btn')">
+              <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px; margin-right: 8px;">
+              Continue with Google
+            </button>
+          </div>
         </div>
-
-        <!-- SUCCESS -->
-        <div class="success-state" id="success-state">
-          <div class="success-icon">✓</div>
-          <h3 id="success-title">Welcome back!</h3>
-          <p  id="success-msg">You're now signed in to Vestique.</p>
-          <a href="products.html">Shop Now</a>
-        </div>
-
-        <!-- LOGIN -->
-        <div class="form-section active" id="form-login">
-          <h2 class="form-title">Sign In</h2>
-          <p class="form-subtitle">Welcome back to Vestique</p>
-
-          <div class="field">
-            <label>Email</label>
-            <input type="email" id="login-email" placeholder="your@email.com">
-            <p class="error-msg" id="login-email-err">Please enter a valid email</p>
-          </div>
-          <div class="field">
-            <label>Password</label>
-            <input type="password" id="login-password" placeholder="••••••••">
-            <p class="error-msg" id="login-pass-err">Incorrect email or password</p>
-          </div>
-
-          <button class="submit-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
-          <p class="switch-text">Don't have an account? <span onclick="switchTab('signup')">Create one</span></p>
-        </div>
-
-        <!-- SIGNUP -->
-        <div class="form-section" id="form-signup">
-          <h2 class="form-title">Create Account</h2>
-          <p class="form-subtitle">Join the Vestique community</p>
-
-          <div class="field">
-            <label>Full Name</label>
-            <input type="text" id="signup-name" placeholder="Your name">
-            <p class="error-msg" id="signup-name-err">Please enter your name</p>
-          </div>
-          <div class="field">
-            <label>Email</label>
-            <input type="email" id="signup-email" placeholder="your@email.com">
-            <p class="error-msg" id="signup-email-err">Please enter a valid email</p>
-          </div>
-          <div class="field">
-            <label>Password</label>
-            <input type="password" id="signup-password" placeholder="Min. 6 characters">
-            <p class="error-msg" id="signup-pass-err">Password must be at least 6 characters</p>
-          </div>
-
-          <button class="submit-btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
-          <p class="switch-text">Already have an account? <span onclick="switchTab('login')">Sign in</span></p>
-        </div>
-
       </div>
     </div>
   </div>
@@ -238,9 +201,8 @@
     import { getFirestore, doc, getDoc, setDoc, deleteDoc }   from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
     import {
       getAuth,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      updateProfile
+      GoogleAuthProvider,
+      signInWithPopup
     } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
     /* ─── Init ───────────────────────────────────────────────────── */
@@ -286,41 +248,23 @@
     }
 
     /* ─── UI helpers ─────────────────────────────────────────────── */
-    function hideErrors() {
-      document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
-    }
-
-    function setLoading(btnId, loading, defaultLabel) {
+    function setLoading(btnId, loading) {
       const btn = document.getElementById(btnId);
-      btn.disabled    = loading;
-      btn.textContent = loading ? 'Please wait…' : defaultLabel;
-      document.querySelectorAll('.field input').forEach(i => i.disabled = loading);
+      btn.disabled = loading;
     }
 
-    /* ─── Login ──────────────────────────────────────────────────── */
-    window.handleLogin = async function() {
-      hideErrors();
-      const email    = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value;
-      let valid = true;
-
-      if (!email || !email.includes('@')) {
-        document.getElementById('login-email-err').style.display = 'block'; valid = false;
-      }
-      if (!password) {
-        document.getElementById('login-pass-err').style.display = 'block'; valid = false;
-      }
-      if (!valid) return;
-
-      setLoading('login-btn', true, 'Sign In');
+    /* ─── Google Login ──────────────────────────────────────────── */
+    window.handleGoogleLogin = async function(buttonId) {
+      setLoading(buttonId, true);
 
       try {
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-        const user       = credential.user;
+        const provider = new GoogleAuthProvider();
+        const result   = await signInWithPopup(auth, provider);
+        const user     = result.user;
 
         // Cache name + email in localStorage for cart ID and checkout pre-fill
         localStorage.setItem('vestique-current-user', JSON.stringify({
-          name:  user.displayName || email.split('@')[0],
+          name:  user.displayName || user.email.split('@')[0],
           email: user.email
         }));
 
@@ -328,63 +272,13 @@
         window.location.href = 'products.html';
 
       } catch (e) {
-        const msg = (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
-          ? 'Incorrect email or password'
-          : 'Something went wrong. Please try again.';
-        document.getElementById('login-pass-err').textContent    = msg;
-        document.getElementById('login-pass-err').style.display  = 'block';
+        console.error('Google sign-in error:', e);
       } finally {
-        setLoading('login-btn', false, 'Sign In');
+        setLoading(buttonId, false);
       }
     };
 
-    /* ─── Signup ─────────────────────────────────────────────────── */
-    window.handleSignup = async function() {
-      hideErrors();
-      const name     = document.getElementById('signup-name').value.trim();
-      const email    = document.getElementById('signup-email').value.trim();
-      const password = document.getElementById('signup-password').value;
-      let valid = true;
 
-      if (!name)                    { document.getElementById('signup-name-err').style.display  = 'block'; valid = false; }
-      if (!email || !email.includes('@')) { document.getElementById('signup-email-err').style.display = 'block'; valid = false; }
-      if (password.length < 6)     { document.getElementById('signup-pass-err').style.display  = 'block'; valid = false; }
-      if (!valid) return;
-
-      setLoading('signup-btn', true, 'Create Account');
-
-      try {
-        const credential = await createUserWithEmailAndPassword(auth, email, password);
-
-        // Store display name in Firebase Auth profile
-        await updateProfile(credential.user, { displayName: name });
-
-        // Cache in localStorage
-        localStorage.setItem('vestique-current-user', JSON.stringify({ name, email }));
-
-        await mergeGuestCart(email);
-        window.location.href = 'products.html';
-
-      } catch (e) {
-        let msg = 'Something went wrong. Please try again.';
-        if (e.code === 'auth/email-already-in-use') msg = 'This email is already registered';
-        if (e.code === 'auth/invalid-email')        msg = 'Please enter a valid email';
-        document.getElementById('signup-email-err').textContent   = msg;
-        document.getElementById('signup-email-err').style.display = 'block';
-      } finally {
-        setLoading('signup-btn', false, 'Create Account');
-      }
-    };
-
-    /* ─── Tab switch ─────────────────────────────────────────────── */
-    window.switchTab = function(tab) {
-      document.getElementById('tab-login').classList.toggle('active',   tab === 'login');
-      document.getElementById('tab-signup').classList.toggle('active',  tab === 'signup');
-      document.getElementById('form-login').classList.toggle('active',  tab === 'login');
-      document.getElementById('form-signup').classList.toggle('active', tab === 'signup');
-      document.getElementById('success-state').style.display = 'none';
-      hideErrors();
-    };
   </script>
 
   <div id="admin-gear" onclick="window.location.href='admin.html'"
