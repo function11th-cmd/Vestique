@@ -574,6 +574,7 @@
         <h2 class="modal-title" id="modal-title"></h2>
         <p class="modal-price"  id="modal-price"></p>
         <p class="modal-desc"   id="modal-desc"></p>
+        <p class="modal-desc" id="modal-category" style="color: #c8a97e; font-size: 0.85rem; margin: 8px 0; letter-spacing: 1px; text-transform: uppercase;"></p>
         <p class="modal-desc" id="modal-stock" style="color: #2d7a2d; font-size: 0.9rem; margin: 8px 0;"></p>
 
         <p class="modal-section-label">Select Size <span style="color:#c0392b;">*</span></p>
@@ -755,8 +756,7 @@
 
     function getFilteredProducts() {
       if (activeFilter === "all") return products;
-      return products.filter(p =>
-        ((p.name || "") + " " + (p.desc || "")).toLowerCase().includes(activeFilter));
+      return products.filter(p => (p.category || "").toLowerCase() === activeFilter);
     }
 
     function renderProducts() {
@@ -804,6 +804,9 @@
           <div class="product-card-info">
             <h3>${product.name}</h3>
             ${product.desc ? `<p class="desc">${product.desc}</p>` : ""}
+            <p class="desc" style="color: #6b6b6b; font-size:0.75rem; margin:6px 0; letter-spacing:1px; text-transform:uppercase;">
+              ${product.category ? (product.category === 'football' ? '⚽ Football' : product.category === 'cricket' ? '🏏 Cricket' : product.category === 'basketball' ? '🏀 Basketball' : '') : ''}
+            </p>
             <p class="desc" style="color: ${isOutOfStock ? '#c0392b' : '#2d7a2d'}; font-size:0.8rem; margin:6px 0;">Stock: ${product.stock || 0}</p>
             <div class="product-card-bottom">
               <span class="product-price">₹${Number(product.price).toLocaleString("en-IN")}</span>
@@ -827,6 +830,11 @@
       document.getElementById("modal-title").textContent     = currentProduct.name;
       document.getElementById("modal-price").textContent     = "₹" + Number(currentProduct.price).toLocaleString("en-IN");
       document.getElementById("modal-desc").textContent      = currentProduct.desc || "Premium quality streetwear. Made for everyday style and comfort.";
+      
+      // Display category with emoji
+      const categoryEmojis = { football: '⚽ Football', cricket: '🏏 Cricket', basketball: '🏀 Basketball' };
+      document.getElementById("modal-category").textContent = categoryEmojis[currentProduct.category] || '';
+      
       document.getElementById("modal-stock").textContent     = `Stock: ${currentProduct.stock || 0}${isOutOfStock ? ' - Out of Stock' : ' Available'}`;
       document.getElementById("modal-stock").style.color     = isOutOfStock ? '#c0392b' : '#2d7a2d';
       document.getElementById("modal-qty").textContent       = 1;
