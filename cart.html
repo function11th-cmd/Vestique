@@ -844,7 +844,9 @@
           `*Customer:*\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nAddress: ${address}\n\n` +
           `*Items:*\n${itemsWA}\n\n*Total: ₹${total.toLocaleString('en-IN')}*`;
 
-        const whatsappURL = `https://wa.me/917306185218?text=${encodeURIComponent(message)}`;
+        // Use web.whatsapp.com for macOS/cross-platform compatibility
+        const phoneNumber = '917306185218';
+        const whatsappURL = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
         window.closeCheckout();
         document.getElementById('success-order-num').textContent = 'Order #' + orderId;

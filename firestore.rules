@@ -33,7 +33,16 @@ service cloud.firestore {
       // Compatibility: tracking page currently allows public read by order id.
       allow create: if true;
       allow read: if true;
+
+      // Admin can update/delete any order.
       allow update, delete: if isAdmin();
+
+      // Signed-in users can cancel their own pending orders (Processing/Confirmed).
+      allow update: if isSignedIn()
+        && request.auth.token.email == resource.data.email
+        && resource.data.status in ['Processing', 'Confirmed']
+        && request.resource.data.status == 'Cancelled'
+        && request.resource.data.keys().hasOnly(['status']);
     }
   }
 }
