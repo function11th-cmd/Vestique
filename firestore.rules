@@ -42,7 +42,7 @@ service cloud.firestore {
         && request.auth.token.email == resource.data.email
         && resource.data.status in ['Processing', 'Confirmed']
         && request.resource.data.status == 'Cancelled'
-        && request.resource.data.keys().hasOnly(['status']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
   }
 }
