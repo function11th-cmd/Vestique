@@ -64,17 +64,14 @@
   <div class="gate" id="gate">
     <div class="gate-box">
       <h2>Vestique</h2>
-      <p>Admin Access Only</p>
-      <input type="email"    id="admin-email"    placeholder="Admin email"
-        onkeydown="if(event.key==='Enter') checkPassword()">
-      <input type="password" id="password-input" placeholder="Password"
-        onkeydown="if(event.key==='Enter') checkPassword()">
-      <button id="gate-btn" onclick="checkPassword()">Sign In</button>
-      <p class="gate-error" id="gate-error">Incorrect credentials or not an admin.</p>
+      <p>Verifying Admin Access</p>
+      <button id="gate-btn" onclick="goToLogin()">Continue To Login</button>
+      <p class="gate-error" id="gate-error">Admin access required. Please sign in with an admin account.</p>
     </div>
   </div>
 
   <!-- ADMIN PANEL -->
+  <template id="admin-panel-template">
   <div class="admin-panel" id="admin-panel">
     <header class="mobile-nav">
       <h2>Vestique</h2>
@@ -91,34 +88,6 @@
         <a href="admin.html" style="color:#c8a97e">Admin</a>
       </nav>
     </header>
-
-    <script>
-      (function () {
-        const nav = document.getElementById("main-nav");
-        const hamburger = document.getElementById("hamburger-btn");
-        if (!nav || !hamburger) return;
-
-        function closeMenu() {
-          nav.classList.remove("open");
-          hamburger.classList.remove("open");
-          hamburger.setAttribute("aria-expanded", "false");
-        }
-
-        hamburger.addEventListener("click", function () {
-          const isOpen = nav.classList.toggle("open");
-          hamburger.classList.toggle("open", isOpen);
-          hamburger.setAttribute("aria-expanded", isOpen ? "true" : "false");
-        });
-
-        nav.querySelectorAll("a").forEach(function (link) {
-          link.addEventListener("click", closeMenu);
-        });
-
-        window.addEventListener("resize", function () {
-          if (window.innerWidth > 768) closeMenu();
-        });
-      })();
-    </script>
 
     <div class="admin-title">
       Admin Panel
@@ -230,6 +199,7 @@
       </div>
     </div>
   </div>
+  </template>
 
   <script type="module">
     import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -239,7 +209,6 @@
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import {
       getAuth,
-      signInWithEmailAndPassword,
       signOut,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -258,76 +227,89 @@
     const db   = getFirestore(app);
     const auth = getAuth(app);
 
-    /* ─── Auth state listener — auto-restores session on page reload ─ */
-    // Initialize drag & drop on page load
-    document.addEventListener('DOMContentLoaded', setupDragDrop);
+    let adminPanelMounted = false;
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Check they're in the admins collection
-        const adminSnap = await getDoc(doc(db, 'admins', user.email));
-        if (adminSnap.exists()) {
-          showPanel();
-        } else {
-          // Signed in but not an admin — sign them out
-          await signOut(auth);
-          showGate();
-        }
-      } else {
-        showGate();
+    function setupAdminNav() {
+      const nav = document.getElementById('main-nav');
+      const hamburger = document.getElementById('hamburger-btn');
+      if (!nav || !hamburger) return;
+
+      function closeMenu() {
+        nav.classList.remove('open');
+        hamburger.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
       }
+
+      hamburger.addEventListener('click', function () {
+        const isOpen = nav.classList.toggle('open');
+        hamburger.classList.toggle('open', isOpen);
+        hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      nav.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', closeMenu);
+      });
+
+      window.addEventListener('resize', function () {
+        if (window.innerWidth > 768) closeMenu();
+      });
+    }
+
+    function mountAdminPanel() {
+      if (adminPanelMounted) return;
+      const template = document.getElementById('admin-panel-template');
+      if (!template) return;
+      document.body.appendChild(template.content.cloneNode(true));
+      adminPanelMounted = true;
+      setupAdminNav();
+      setupDragDrop();
+    }
+
+    function redirectToLogin(reason = 'auth_required') {
+      const next = encodeURIComponent('admin.html');
+      window.location.replace(`login.html?next=${next}&reason=${encodeURIComponent(reason)}`);
+    }
+
+    window.goToLogin = function() {
+      redirectToLogin('auth_required');
+    };
+
+    /* ─── Auth state listener — auto-restores session on page reload ─ */
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        redirectToLogin('auth_required');
+        return;
+      }
+
+      const adminSnap = await getDoc(doc(db, 'admins', user.email));
+      if (adminSnap.exists()) {
+        showPanel();
+        return;
+      }
+
+      await signOut(auth);
+      redirectToLogin('not_admin');
     });
 
     function showPanel() {
+      mountAdminPanel();
       document.getElementById('gate').style.display        = 'none';
-      document.getElementById('admin-panel').style.display = 'block';
+      const adminPanel = document.getElementById('admin-panel');
+      if (adminPanel) adminPanel.style.display = 'block';
       loadProducts();
       loadOrders();
     }
 
     function showGate() {
       document.getElementById('gate').style.display        = 'flex';
-      document.getElementById('admin-panel').style.display = 'none';
+      const adminPanel = document.getElementById('admin-panel');
+      if (adminPanel) adminPanel.style.display = 'none';
     }
-
-    /* ─── Login ──────────────────────────────────────────────────── */
-    window.checkPassword = async function() {
-      const email    = document.getElementById('admin-email').value.trim();
-      const password = document.getElementById('password-input').value;
-      const btn      = document.getElementById('gate-btn');
-      const errEl    = document.getElementById('gate-error');
-
-      if (!email || !password) return;
-
-      btn.disabled    = true;
-      btn.textContent = 'Checking…';
-      errEl.style.display = 'none';
-
-      try {
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-        const user = credential.user;
-
-        // Verify they're in the admins collection
-        const adminSnap = await getDoc(doc(db, 'admins', user.email));
-        if (!adminSnap.exists()) {
-          await signOut(auth);
-          throw new Error('Not an admin');
-        }
-
-        // onAuthStateChanged will handle showing the panel
-
-      } catch (e) {
-        errEl.textContent   = 'Incorrect credentials or not an admin.';
-        errEl.style.display = 'block';
-        btn.disabled    = false;
-        btn.textContent = 'Sign In';
-      }
-    };
 
     /* ─── Logout ─────────────────────────────────────────────────── */
     window.logout = async function() {
       await signOut(auth);
-      showGate();
+      redirectToLogin('signed_out');
     };
 
     /* ─── Products ───────────────────────────────────────────────── */

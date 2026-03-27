@@ -249,6 +249,30 @@
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
+    const queryParams = new URLSearchParams(window.location.search);
+    const requestedNext = queryParams.get('next') || '';
+    const reason = queryParams.get('reason') || '';
+
+    function getSafeNextPath(path) {
+      if (path === 'admin.html' || path === '/admin.html') return 'admin.html';
+      return 'products.html';
+    }
+
+    async function isUserAdmin(email) {
+      if (!email) return false;
+      try {
+        const adminSnap = await getDoc(doc(db, 'admins', email));
+        return adminSnap.exists();
+      } catch {
+        return false;
+      }
+    }
+
+    if (reason === 'not_admin') {
+      const errorEl = document.getElementById('error-message');
+      errorEl.textContent = 'This account does not have admin access.';
+      errorEl.style.display = 'block';
+    }
 
     /* ─── Guest cart merge ───────────────────────────────────────── */
     async function mergeGuestCart(userEmail) {
@@ -307,7 +331,18 @@
         }));
 
         await mergeGuestCart(user.email);
-        window.location.href = 'products.html';
+
+        const nextPath = getSafeNextPath(requestedNext);
+        if (nextPath === 'admin.html') {
+          const isAdmin = await isUserAdmin(user.email);
+          if (!isAdmin) {
+            errorEl.textContent = 'Signed in successfully, but this account is not an admin.';
+            errorEl.style.display = 'block';
+            return;
+          }
+        }
+
+        window.location.href = nextPath;
 
       } catch (e) {
         console.error('Google sign-in error:', e);
