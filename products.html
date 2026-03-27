@@ -94,6 +94,18 @@
       display: block;
       background: #e8e4e0;
       transition: transform 0.6s ease;
+      background-image: linear-gradient(90deg, #e8e4e0 25%, #d8cfc8 50%, #e8e4e0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .product-card-img[loading="lazy"]:not([src*="http"]) {
+      animation: shimmer 2s infinite;
     }
 
     .product-card:hover .product-card-img { transform: scale(1.04); }
@@ -158,8 +170,8 @@
       background: #0a0a0a;
       color: white;
       border: none;
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       cursor: pointer;
       font-size: 1.2rem;
       display: flex;
@@ -264,6 +276,15 @@
       object-fit: contain;
       display: block;
       padding: 20px;
+      background: linear-gradient(90deg, #e8e4e0 25%, #d8cfc8 50%, #e8e4e0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-img-side img[src*="http"] {
+      animation: none;
+      background: none;
     }
 
     .modal-info-side {
@@ -421,6 +442,63 @@
       overflow-x: auto;
     }
 
+    .search-sort-container {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      padding: 10px 16px;
+      border: 1px solid #e8e4e0;
+      border-radius: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a0a0a;
+      transition: all 0.2s ease;
+      min-width: 200px;
+    }
+
+    .search-input::placeholder { color: #a8a8a8; }
+    .search-input:focus { outline: none; border-color: #c8a97e; box-shadow: 0 0 0 2px rgba(200, 169, 126, 0.1); }
+
+    .sort-select {
+      padding: 10px 14px;
+      border: 1px solid #e8e4e0;
+      border-radius: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a0a0a;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sort-select:focus { outline: none; border-color: #c8a97e; }
+    .sort-select:hover { border-color: #c8a97e; }
+
+    .search-clear {
+      position: absolute;
+      right: 16px;
+      background: none;
+      border: none;
+      color: #a8a8a8;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0;
+      transition: color 0.2s;
+    }
+
+    .search-clear:hover { color: #0a0a0a; }
+
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
     .filter-tabs { 
       display: flex; 
       align-items: center;
@@ -515,10 +593,33 @@
       .modal-img-side img { padding: 16px; }
       .products-wrapper { padding: 30px 20px; }
       .filter-bar { 
-        padding: 16px 20px; 
+        padding: 12px 20px; 
         gap: 8px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .search-sort-container {
+        width: 100%;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .search-input {
+        flex: 1;
+        min-width: 150px;
+        font-size: 0.75rem;
+        padding: 8px 12px;
+      }
+      .sort-select {
+        flex: 1;
+        min-width: 100px;
+        font-size: 0.75rem;
+        padding: 8px 10px;
+      }
+      .filter-tabs {
+        width: 100%;
+        gap: 6px;
       }
       .filter-tab { 
         padding: 8px 16px; 
@@ -532,6 +633,8 @@
       .filter-count {
         font-size: 0.7rem;
         padding: 0 8px;
+        width: 100%;
+        text-align: right;
       }
       .page-hero { padding: 100px 24px 50px; }
       
@@ -562,8 +665,20 @@
       }
       
       .filter-bar {
-        padding: 12px 16px;
+        padding: 10px 12px;
         gap: 6px;
+      }
+
+      .search-input {
+        min-width: 120px;
+        font-size: 0.7rem;
+        padding: 8px 10px;
+      }
+
+      .sort-select {
+        min-width: 80px;
+        font-size: 0.7rem;
+        padding: 8px 8px;
       }
       
       .filter-count {
@@ -591,6 +706,12 @@
       .modal-img-side { min-height: 280px; }
       .modal-img-side img { padding: 12px; }
       .product-modal { max-height: 100vh; }
+
+      .add-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
     }
 
     /* HAMBURGER MENU */
@@ -704,6 +825,19 @@
   </div>
 
   <div class="filter-bar">
+    <div class="search-sort-container">
+      <div class="search-wrapper">
+        <input type="text" id="search-input" class="search-input" placeholder="Search jerseys..." 
+          oninput="filterBySearch()">
+        <button class="search-clear" id="search-clear-btn" style="display:none;" onclick="clearSearch()">✕</button>
+      </div>
+      <select id="sort-select" class="sort-select" onchange="sortProducts()">
+        <option value="newest">Newest</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+        <option value="name">Name: A-Z</option>
+      </select>
+    </div>
     <div class="filter-tabs">
       <button class="filter-tab" data-filter="all"        onclick="setFilter('all')">All</button>
       <button class="filter-tab" data-filter="football"   onclick="setFilter('football')">⚽ Football</button>
@@ -897,6 +1031,8 @@
     let modalQty       = 1;
     let selectedSize   = "";
     let activeFilter   = "all";
+    let searchQuery    = "";
+    let sortBy         = "newest";
 
     const urlParams = new URLSearchParams(window.location.search);
     const urlFilter = urlParams.get("filter");
@@ -918,6 +1054,25 @@
       document.querySelectorAll(".filter-tab").forEach(t =>
         t.classList.toggle("active", t.dataset.filter === activeFilter));
     }
+
+    window.filterBySearch = function() {
+      searchQuery = document.getElementById("search-input").value.trim().toLowerCase();
+      const clearBtn = document.getElementById("search-clear-btn");
+      clearBtn.style.display = searchQuery ? "block" : "none";
+      renderProducts();
+    };
+
+    window.clearSearch = function() {
+      document.getElementById("search-input").value = "";
+      searchQuery = "";
+      document.getElementById("search-clear-btn").style.display = "none";
+      renderProducts();
+    };
+
+    window.sortProducts = function() {
+      sortBy = document.getElementById("sort-select").value;
+      renderProducts();
+    };
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -961,8 +1116,42 @@
     });
 
     function getFilteredProducts() {
-      if (activeFilter === "all") return products;
-      return products.filter(p => (p.category || "").toLowerCase() === activeFilter);
+      let filtered = products;
+
+      // Apply category filter
+      if (activeFilter !== "all") {
+        filtered = filtered.filter(p => (p.category || "").toLowerCase() === activeFilter);
+      }
+
+      // Apply search filter
+      if (searchQuery) {
+        filtered = filtered.filter(p => {
+          const name = (p.name || "").toLowerCase();
+          const desc = (p.desc || "").toLowerCase();
+          const category = (p.category || "").toLowerCase();
+          return name.includes(searchQuery) || desc.includes(searchQuery) || category.includes(searchQuery);
+        });
+      }
+
+      // Apply sorting
+      const sorted = [...filtered];
+      switch(sortBy) {
+        case "price-low":
+          sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+          break;
+        case "price-high":
+          sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+          break;
+        case "name":
+          sorted.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+          break;
+        case "newest":
+        default:
+          // Keep original order (newest first)
+          break;
+      }
+
+      return sorted;
     }
 
     function renderProducts() {
@@ -1010,7 +1199,7 @@
         card.innerHTML = `
           <div style="position:relative;overflow:hidden;">
             <img class="product-card-img" src="${safeImage}" alt="${safeName}"
-              onerror="this.src='https://placehold.co/400x400'">
+              loading="lazy" onerror="this.src='https://placehold.co/400x400'">
             ${stockBadge}
             <div class="product-card-overlay">
               <button class="quick-view-btn" onclick="openModal('${safeIdForJs}')">Quick View</button>
@@ -1079,10 +1268,29 @@
       img.style.transition = "opacity 0.3s";
       setTimeout(() => {
         const fallback = "https://placehold.co/400x400";
-        img.src = side === "front"
+        const newSrc = side === "front"
           ? sanitizeImageUrl(currentProduct.image, fallback)
           : sanitizeImageUrl(currentProduct.imageBack, fallback);
-        img.style.opacity = "1";
+        
+        // Add loading animation
+        img.style.background = "linear-gradient(90deg, #e8e4e0 25%, #d8cfc8 50%, #e8e4e0 75%)";
+        img.style.backgroundSize = "200% 100%";
+        img.style.animation = "shimmer 2s infinite";
+        
+        const tempImg = new Image();
+        tempImg.onload = () => {
+          img.src = newSrc;
+          img.style.animation = "none";
+          img.style.background = "none";
+          img.style.opacity = "1";
+        };
+        tempImg.onerror = () => {
+          img.src = fallback;
+          img.style.animation = "none";
+          img.style.background = "none";
+          img.style.opacity = "1";
+        };
+        tempImg.src = newSrc;
       }, 300);
       document.querySelectorAll(".img-toggle-btn").forEach(b => b.classList.remove("active"));
       event.target.classList.add("active");
