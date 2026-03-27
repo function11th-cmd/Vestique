@@ -523,9 +523,6 @@
       });
     })();
 
-    if (sessionStorage.getItem("admin-auth") === "true") {
-      document.getElementById("admin-link").style.display = "inline";
-    }
   </script>
 
   <h2 class="cart-title">Your Cart</h2>
@@ -863,17 +860,13 @@
       }
     };
 
-    if (sessionStorage.getItem('admin-auth') === 'true') {
-      document.getElementById('admin-link').style.display = 'inline';
-      const gear = document.getElementById('admin-gear');
-      if (gear) gear.style.display = 'flex';
-    }
-
     (async () => {
       await loadCart();
       renderCart();
     })();
   </script>
+
+  <script type="module" src="admin-visibility.js"></script>
 
   <div id="admin-gear" onclick="window.location.href='admin.html'"
     style="display:none; position:fixed; bottom:24px; right:24px; width:44px; height:44px;

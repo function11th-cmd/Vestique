@@ -361,9 +361,6 @@
       });
     })();
 
-    if (sessionStorage.getItem("admin-auth") === "true") {
-      document.getElementById("admin-link").style.display = "inline";
-    }
   </script>
 
   <!-- HERO + SEARCH -->
@@ -639,10 +636,9 @@
       setTimeout(() => { progressEl.style.width = pct + '%'; }, 100);
     }
 
-    if (sessionStorage.getItem('admin-auth') === 'true') {
-      document.getElementById('admin-gear').style.display = 'flex';
-    }
   </script>
+
+  <script type="module" src="admin-visibility.js"></script>
 
 </body>
 </html>

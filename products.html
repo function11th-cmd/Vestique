@@ -1124,15 +1124,11 @@
       setTimeout(() => toast.classList.remove("show"), 2500);
     }
 
-    /* ─── Admin ─────────────────────────────────────────────────── */
-    if (sessionStorage.getItem("admin-auth") === "true") {
-      document.getElementById("admin-link").style.display = "inline";
-      document.getElementById("admin-gear").style.display = "flex";
-    }
-
     /* ─── Init ───────────────────────────────────────────────────── */
     updateCartCount();
   </script>
+
+  <script type="module" src="admin-visibility.js"></script>
 
 </body>
 </html>

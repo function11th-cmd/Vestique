@@ -192,9 +192,6 @@
       });
     })();
 
-    if (sessionStorage.getItem("admin-auth") === "true") {
-      document.getElementById("admin-link").style.display = "inline";
-    }
   </script>
 
   <div class="not-logged-in" id="not-logged-in" style="display:none">
@@ -429,5 +426,6 @@
            background:#0a0a0a; color:#c8a97e; border-radius:50%; cursor:pointer; font-size:1.2rem;
            align-items:center; justify-content:center; z-index:999;
            box-shadow:0 4px 16px rgba(0,0,0,0.2); transition:transform 0.3s;">⚙</div>
+  <script type="module" src="admin-visibility.js"></script>
 </body>
 </html>

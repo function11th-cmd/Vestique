@@ -938,12 +938,9 @@
       header.classList.toggle('scrolled', window.scrollY > 50);
     });
 
-    // Admin auth
-    if (sessionStorage.getItem('admin-auth') === 'true') {
-      document.getElementById('admin-link').style.display = 'inline';
-      document.getElementById('admin-gear').style.display = 'flex';
-    }
   </script>
+
+  <script type="module" src="admin-visibility.js"></script>
 
 </body>
 </html>
