@@ -17,8 +17,9 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn()
         && request.auth.token.email_verified == true
-        && request.auth.token.email != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+        && request.auth.uid != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.adm_acs == 1;
     }
 
     function isShortText(value, minLen, maxLen) {
@@ -130,10 +131,23 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Admin registry: only admins can manage
-    match /admins/{email} {
-      allow read: if isAdmin() || (isSignedIn() && userEmail() == email);
-      allow write: if isAdmin();
+    // User profiles with admin access flag
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+
+      // User can create own profile only with adm_acs = 0.
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['adm_acs', 'email', 'name', 'createdAt', 'updatedAt'])
+        && request.resource.data.adm_acs is int
+        && request.resource.data.adm_acs == 0
+        && request.resource.data.email is string
+        && request.resource.data.name is string
+        && request.resource.data.createdAt is int
+        && request.resource.data.updatedAt is int;
+
+      // Only admin (via Firebase Console/Admin SDK) can elevate or edit other user profiles.
+      allow update, delete: if isAdmin();
     }
 
     // Carts: owner-only access

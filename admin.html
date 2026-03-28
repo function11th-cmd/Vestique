@@ -67,18 +67,7 @@
 </head>
 <body>
 
-  <!-- LOGIN GATE -->
-  <div class="gate" id="gate">
-    <div class="gate-box">
-      <h2>Vestique</h2>
-      <p>Verifying Admin Access</p>
-      <button id="gate-btn" onclick="goToLogin()">Continue To Login</button>
-      <p class="gate-error" id="gate-error">Admin access required. Please sign in with an admin account.</p>
-    </div>
-  </div>
-
   <!-- ADMIN PANEL -->
-  <template id="admin-panel-template">
   <div class="admin-panel" id="admin-panel">
     <header class="mobile-nav">
       <h2>Vestique</h2>
@@ -210,7 +199,6 @@
       </div>
     </div>
   </div>
-  </template>
 
   <script type="module">
     import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -238,7 +226,7 @@
     const db   = getFirestore(app);
     const auth = getAuth(app);
 
-    let adminPanelMounted = false;
+    let panelInitialized = false;
     const ADMIN_RATE_LIMITS = {
       productCreate: { key: 'vestique-admin-last-product-create', minMs: 5000 },
       orderUpdate: { key: 'vestique-admin-last-order-update', minMs: 1500 }
@@ -282,61 +270,49 @@
       });
     }
 
-    function mountAdminPanel() {
-      if (adminPanelMounted) return;
-      const template = document.getElementById('admin-panel-template');
-      if (!template) return;
-      document.body.appendChild(template.content.cloneNode(true));
-      adminPanelMounted = true;
-      setupAdminNav();
-      setupDragDrop();
+    function redirectTo(path) {
+      window.location.replace(path);
     }
 
-    function redirectToLogin(reason = 'auth_required') {
-      const next = encodeURIComponent('admin.html');
-      window.location.replace(`login.html?next=${next}&reason=${encodeURIComponent(reason)}`);
-    }
-
-    window.goToLogin = function() {
-      redirectToLogin('auth_required');
-    };
-
-    /* ─── Auth state listener — auto-restores session on page reload ─ */
+    /* ─── Auth state listener — enforce admin access by UID ─ */
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        redirectToLogin('auth_required');
+        redirectTo('/login.html');
         return;
       }
 
-      const adminSnap = await getDoc(doc(db, 'admins', user.email));
-      if (adminSnap.exists()) {
+      try {
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        const hasAdminAccess = userSnap.exists() && Number(userSnap.data()?.adm_acs) === 1;
+        if (!hasAdminAccess) {
+          redirectTo('/index.html');
+          return;
+        }
+
         showPanel();
-        return;
+      } catch (error) {
+        console.error('Failed to verify admin access:', error);
+        redirectTo('/index.html');
       }
-
-      await signOut(auth);
-      redirectToLogin('not_admin');
     });
 
     function showPanel() {
-      mountAdminPanel();
-      document.getElementById('gate').style.display        = 'none';
       const adminPanel = document.getElementById('admin-panel');
       if (adminPanel) adminPanel.style.display = 'block';
-      loadProducts();
-      loadOrders();
-    }
 
-    function showGate() {
-      document.getElementById('gate').style.display        = 'flex';
-      const adminPanel = document.getElementById('admin-panel');
-      if (adminPanel) adminPanel.style.display = 'none';
+      if (!panelInitialized) {
+        setupAdminNav();
+        setupDragDrop();
+        loadProducts();
+        loadOrders();
+        panelInitialized = true;
+      }
     }
 
     /* ─── Logout ─────────────────────────────────────────────────── */
     window.logout = async function() {
       await signOut(auth);
-      redirectToLogin('signed_out');
+      redirectTo('/login.html');
     };
 
     /* ─── Products ───────────────────────────────────────────────── */

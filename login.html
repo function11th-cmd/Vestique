@@ -268,11 +268,27 @@
       return 'products.html';
     }
 
-    async function isUserAdmin(email) {
-      if (!email) return false;
+    async function ensureUserProfile(user) {
+      if (!user?.uid) return;
+
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) return;
+
+      await setDoc(userRef, {
+        adm_acs: 0,
+        email: user.email || '',
+        name: user.displayName || (user.email ? user.email.split('@')[0] : 'User'),
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+
+    async function isUserAdmin(user) {
+      if (!user?.uid) return false;
       try {
-        const adminSnap = await getDoc(doc(db, 'admins', email));
-        return adminSnap.exists();
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        return userSnap.exists() && Number(userSnap.data()?.adm_acs) === 1;
       } catch {
         return false;
       }
@@ -328,6 +344,8 @@
     async function handleSignedInUser(user) {
       if (!user) return;
 
+      await ensureUserProfile(user);
+
       localStorage.setItem('vestique-current-user', JSON.stringify({
         name:  user.displayName || (user.email ? user.email.split('@')[0] : 'User'),
         email: user.email || ''
@@ -338,7 +356,7 @@
       const errorEl = document.getElementById('error-message');
       const nextPath = getSafeNextPath(requestedNext);
       if (nextPath === 'admin.html') {
-        const isAdmin = await isUserAdmin(user.email);
+        const isAdmin = await isUserAdmin(user);
         if (!isAdmin) {
           errorEl.textContent = 'Signed in successfully, but this account is not an admin.';
           errorEl.style.display = 'block';

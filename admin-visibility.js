@@ -16,19 +16,35 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 function setAdminUiVisible(isVisible) {
-  const adminLink = document.getElementById('admin-link');
+  const adminLink = getOrCreateAdminNavLink();
   const adminGear = document.getElementById('admin-gear');
 
   if (adminLink) adminLink.style.display = isVisible ? 'inline' : 'none';
   if (adminGear) adminGear.style.display = isVisible ? 'flex' : 'none';
 }
 
+function getOrCreateAdminNavLink() {
+  const nav = document.getElementById('main-nav');
+  if (!nav) return document.getElementById('admin-link');
+
+  let adminLink = document.getElementById('admin-link');
+  if (!adminLink) {
+    adminLink = document.createElement('a');
+    adminLink.id = 'admin-link';
+    adminLink.href = 'admin.html';
+    adminLink.textContent = 'Admin';
+    nav.appendChild(adminLink);
+  }
+
+  return adminLink;
+}
+
 async function isAdmin(user) {
-  if (!user || !user.email) return false;
+  if (!user || !user.uid) return false;
 
   try {
-    const adminSnap = await getDoc(doc(db, 'admins', user.email));
-    return adminSnap.exists();
+    const userSnap = await getDoc(doc(db, 'users', user.uid));
+    return userSnap.exists() && Number(userSnap.data()?.adm_acs) === 1;
   } catch (error) {
     console.error('Failed to verify admin access:', error);
     return false;

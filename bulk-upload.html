@@ -129,8 +129,8 @@
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      const snap = await getDoc(doc(db, 'admins', user.email));
-      if (snap.exists()) showMain();
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists() && Number(snap.data()?.adm_acs) === 1) showMain();
     }
   });
 
@@ -151,8 +151,8 @@
     btn.disabled = true; btn.textContent = 'Signing in…'; errEl.style.display = 'none';
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      const snap = await getDoc(doc(db, 'admins', cred.user.email));
-      if (!snap.exists()) throw new Error('Not an admin');
+      const snap = await getDoc(doc(db, 'users', cred.user.uid));
+      if (!(snap.exists() && Number(snap.data()?.adm_acs) === 1)) throw new Error('Not an admin');
       showMain();
     } catch(e) {
       errEl.style.display = 'block';
