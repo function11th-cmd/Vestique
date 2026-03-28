@@ -180,6 +180,10 @@
           </div>
           <input type="hidden" id="prod-image-back">
         </div>
+        <div class="form-group" aria-hidden="true" style="position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden;">
+          <label for="admin-hp">Leave this field empty</label>
+          <input type="text" id="admin-hp" autocomplete="off" tabindex="-1">
+        </div>
         <button class="add-btn" onclick="addProduct()">+ Add Product</button>
         <div class="success-msg" id="success-msg">✓ Product added successfully!</div>
       </div>
@@ -235,6 +239,22 @@
     const auth = getAuth(app);
 
     let adminPanelMounted = false;
+    const ADMIN_RATE_LIMITS = {
+      productCreate: { key: 'vestique-admin-last-product-create', minMs: 5000 },
+      orderUpdate: { key: 'vestique-admin-last-order-update', minMs: 1500 }
+    };
+
+    function canProceedRateLimited(config) {
+      const now = Date.now();
+      const last = Number(sessionStorage.getItem(config.key) || 0);
+      if (now - last < config.minMs) {
+        const waitSec = Math.ceil((config.minMs - (now - last)) / 1000);
+        showValidationError(`Please wait ${waitSec}s before trying again.`);
+        return false;
+      }
+      sessionStorage.setItem(config.key, String(now));
+      return true;
+    }
 
     function setupAdminNav() {
       const nav = document.getElementById('main-nav');
@@ -465,6 +485,16 @@
     }
 
     window.addProduct = async function() {
+      const honeypot = document.getElementById('admin-hp');
+      if (honeypot && honeypot.value.trim()) {
+        showValidationError('Automated submission blocked.');
+        return;
+      }
+
+      if (!canProceedRateLimited(ADMIN_RATE_LIMITS.productCreate)) {
+        return;
+      }
+
       // Validate all inputs
       const nameValidation = VALIDATORS.productName(document.getElementById('prod-name').value);
       if (!nameValidation.valid) {
@@ -774,7 +804,11 @@
     }
 
     window.updateOrderStatus = async function(firestoreId, newStatus) {
-      try { await updateDoc(doc(db, 'orders', firestoreId), { status: newStatus }); }
+      if (!canProceedRateLimited(ADMIN_RATE_LIMITS.orderUpdate)) {
+        return;
+      }
+
+      try { await updateDoc(doc(db, 'orders', firestoreId), { status: newStatus, updatedAt: Date.now() }); }
       catch(e) { alert('Error updating: ' + e.message); }
     };
   </script>

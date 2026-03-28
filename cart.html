@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.googleapis.com https://cdn.jsdelivr.net; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.firebaseapp.com https://*.web.app https://accounts.google.com https://apis.google.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.emailjs.com; frame-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://*.web.app; child-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://*.web.app;">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Cart — Vestique</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -606,6 +612,7 @@
       collection,
       addDoc
     } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
     /* ─── Firebase ───────────────────────────────────────────────── */
     const firebaseConfig = {
@@ -619,12 +626,14 @@
 
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
+    const auth = getAuth(app);
 
     /* ─── EmailJS init ───────────────────────────────────────────── */
     // Replace these with your EmailJS credentials (see setup instructions)
     const EMAILJS_PUBLIC_KEY  = 'YOUR_EMAILJS_PUBLIC_KEY';
     const EMAILJS_SERVICE_ID  = 'YOUR_EMAILJS_SERVICE_ID';
     const EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID';
+    const ORDER_MIN_INTERVAL_MS = 30 * 1000;
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -763,6 +772,13 @@
 
     /* ─── Checkout ───────────────────────────────────────────────── */
     window.openCheckout = function() {
+      const sessionUser = auth.currentUser;
+      if (!sessionUser || !sessionUser.email) {
+        const next = encodeURIComponent('cart.html');
+        window.location.href = `login.html?next=${next}&reason=checkout_login_required`;
+        return;
+      }
+
       const user = JSON.parse(localStorage.getItem('vestique-current-user') || 'null');
       if (user) {
         document.getElementById('checkout-name').value  = user.name  || '';
@@ -777,6 +793,14 @@
 
     /* ─── Place order ────────────────────────────────────────────── */
     window.placeOrder = async function() {
+      const sessionUser = auth.currentUser;
+      if (!sessionUser || !sessionUser.email) {
+        alert('Please sign in to place an order.');
+        const next = encodeURIComponent('cart.html');
+        window.location.href = `login.html?next=${next}&reason=checkout_login_required`;
+        return;
+      }
+
       const name    = document.getElementById('checkout-name').value.trim();
       const email   = document.getElementById('checkout-email').value.trim();
       const phone   = document.getElementById('checkout-phone').value.trim();
@@ -784,6 +808,19 @@
 
       if (!name || !email || !phone || !address) {
         alert('Please fill in all fields!');
+        return;
+      }
+
+      if (email.toLowerCase() !== sessionUser.email.toLowerCase()) {
+        alert('Use your signed-in email address for checkout.');
+        return;
+      }
+
+      const now = Date.now();
+      const lastOrderAt = Number(localStorage.getItem('vestique-last-order-at') || 0);
+      if (now - lastOrderAt < ORDER_MIN_INTERVAL_MS) {
+        const waitSec = Math.ceil((ORDER_MIN_INTERVAL_MS - (now - lastOrderAt)) / 1000);
+        alert(`Please wait ${waitSec}s before placing another order.`);
         return;
       }
 
@@ -795,7 +832,10 @@
       const total   = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
       const order   = {
         id: orderId,
-        name, email, phone, address,
+        name,
+        email: sessionUser.email,
+        phone,
+        address,
         items: cartItems,
         total,
         date: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }),
@@ -806,6 +846,7 @@
       try {
         // Save order to Firestore
         await addDoc(collection(db, 'orders'), order);
+        localStorage.setItem('vestique-last-order-at', String(now));
 
         // Clear cart
         await clearCart();

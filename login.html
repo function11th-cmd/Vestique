@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Security Headers -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.firebaseapp.com https://accounts.google.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src 'self' https://accounts.google.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.googleapis.com; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.firebaseapp.com https://*.web.app https://accounts.google.com https://apis.google.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://*.web.app; child-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://*.web.app;">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
@@ -240,7 +240,10 @@
     import {
       getAuth,
       GoogleAuthProvider,
-      signInWithPopup
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      onAuthStateChanged
     } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
     /* ─── Init ───────────────────────────────────────────────────── */
@@ -313,7 +316,70 @@
     function setLoading(btnId, loading) {
       const btn = document.getElementById(btnId);
       btn.disabled = loading;
+      btn.setAttribute('aria-busy', loading ? 'true' : 'false');
+      if (loading) {
+        btn.dataset.originalText = btn.dataset.originalText || btn.innerHTML;
+        btn.innerHTML = 'Continuing...';
+      } else if (btn.dataset.originalText) {
+        btn.innerHTML = btn.dataset.originalText;
+      }
     }
+
+    async function handleSignedInUser(user) {
+      if (!user) return;
+
+      localStorage.setItem('vestique-current-user', JSON.stringify({
+        name:  user.displayName || (user.email ? user.email.split('@')[0] : 'User'),
+        email: user.email || ''
+      }));
+
+      if (user.email) await mergeGuestCart(user.email);
+
+      const errorEl = document.getElementById('error-message');
+      const nextPath = getSafeNextPath(requestedNext);
+      if (nextPath === 'admin.html') {
+        const isAdmin = await isUserAdmin(user.email);
+        if (!isAdmin) {
+          errorEl.textContent = 'Signed in successfully, but this account is not an admin.';
+          errorEl.style.display = 'block';
+          return;
+        }
+      }
+
+      window.location.href = nextPath;
+    }
+
+    function shouldPreferRedirect() {
+      const ua = navigator.userAgent || '';
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    }
+
+    async function startGoogleRedirect() {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithRedirect(auth, provider);
+    }
+
+    // Handle return from redirect flow.
+    (async function processRedirectResult() {
+      const errorEl = document.getElementById('error-message');
+      try {
+        const redirectResult = await getRedirectResult(auth);
+        if (redirectResult?.user) {
+          await handleSignedInUser(redirectResult.user);
+          return;
+        }
+
+        // If the auth state is already available, continue without extra clicks.
+        onAuthStateChanged(auth, async (user) => {
+          if (user) await handleSignedInUser(user);
+        });
+      } catch (e) {
+        console.error('Redirect sign-in error:', e);
+        errorEl.textContent = `Error: ${e.message || e.code || 'Google redirect failed.'}`;
+        errorEl.style.display = 'block';
+      }
+    })();
 
     /* ─── Google Login ──────────────────────────────────────────── */
     window.handleGoogleLogin = async function(buttonId) {
@@ -323,33 +389,26 @@
       errorEl.textContent = '';
 
       try {
+        if (window.location.protocol === 'file:') {
+          throw {
+            code: 'auth/invalid-origin',
+            message: 'Google login requires running on http(s), not file://.'
+          };
+        }
+
+        if (shouldPreferRedirect()) {
+          await startGoogleRedirect();
+          return;
+        }
+
         console.log('Starting Google Sign-In...');
         const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
         console.log('Provider created:', provider);
         
         const result   = await signInWithPopup(auth, provider);
         console.log('Sign-in successful:', result);
-        const user     = result.user;
-
-        // Cache name + email in localStorage for cart ID and checkout pre-fill
-        localStorage.setItem('vestique-current-user', JSON.stringify({
-          name:  user.displayName || user.email.split('@')[0],
-          email: user.email
-        }));
-
-        await mergeGuestCart(user.email);
-
-        const nextPath = getSafeNextPath(requestedNext);
-        if (nextPath === 'admin.html') {
-          const isAdmin = await isUserAdmin(user.email);
-          if (!isAdmin) {
-            errorEl.textContent = 'Signed in successfully, but this account is not an admin.';
-            errorEl.style.display = 'block';
-            return;
-          }
-        }
-
-        window.location.href = nextPath;
+        await handleSignedInUser(result.user);
 
       } catch (e) {
         console.error('Google sign-in error:', e);
@@ -363,6 +422,26 @@
           errorMsg = 'Sign-in popup was blocked. Please allow popups and try again.';
         } else if (e.code === 'auth/cancelled-popup-request') {
           errorMsg = 'Multiple sign-in attempts detected. Please try again.';
+        } else if (e.code === 'auth/internal-error') {
+          // This often indicates CSP/authorized-domain issues in Firebase OAuth popup flows.
+          try {
+            await startGoogleRedirect();
+            return;
+          } catch {
+            errorMsg = 'Google auth is misconfigured. Check Firebase Authorized domains and CSP allowlist for googleapis/firebaseapp/web.app origins.';
+          }
+        } else if (e.code === 'auth/operation-not-supported-in-this-environment') {
+          try {
+            await startGoogleRedirect();
+            return;
+          } catch {
+            errorMsg = 'This browser blocks popup login. Redirect login also failed; please check Firebase Authorized domains.';
+          }
+        } else if (e.code === 'auth/unauthorized-domain') {
+          const currentHost = window.location.hostname || 'unknown-host';
+          errorMsg = `This domain is not authorized for Firebase Auth: ${currentHost}. Add it in Firebase Console -> Authentication -> Settings -> Authorized domains.`;
+        } else if (e.code === 'auth/invalid-origin') {
+          errorMsg = 'Open this app through an http(s) URL. Google sign-in does not work from file:// pages.';
         } else {
           errorMsg = `Error: ${e.message || e.code || 'Unknown error'}`;
         }

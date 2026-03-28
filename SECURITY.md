@@ -208,6 +208,26 @@ grep -r "cloudinary\|CLOUDINARY" *.html *.js --exclude-dir=node_modules
 - [ ] Set up Cloud Monitoring alerts
 - [ ] Regular audit of admin logs
 
+## Required Hosting Header (HSTS)
+
+HSTS cannot be set with a meta tag. It must be added by your hosting platform or reverse proxy.
+
+Use this response header in production (HTTPS only):
+
+```http
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+```
+
+Examples:
+
+```nginx
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+```
+
+```apache
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+```
+
 ---
 
 ## .gitignore Configuration

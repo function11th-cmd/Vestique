@@ -1,7 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Track Order — Vestique</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.googleapis.com; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.firebaseapp.com https://*.web.app https://accounts.google.com https://apis.google.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://*.web.app; child-src 'self' https://accounts.google.com https://*.google.com https://*.firebaseapp.com https://*.web.app;">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Track Order — Vestique</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
@@ -463,6 +470,7 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
     import {
       getFirestore, collection, query, where, getDocs, doc, getDoc
     } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -478,14 +486,26 @@
 
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
+    const auth = getAuth(app);
+    let activeUserEmail = '';
 
     // Pre-fill from URL param e.g. tracking.html?order=123456
     const urlParams = new URLSearchParams(window.location.search);
     const urlOrder  = urlParams.get('order');
-    if (urlOrder) {
-      document.getElementById('order-id-input').value = urlOrder;
-      window.addEventListener('load', () => searchOrder());
-    }
+
+    onAuthStateChanged(auth, (user) => {
+      activeUserEmail = user?.email || '';
+      if (!activeUserEmail) {
+        const next = encodeURIComponent(`tracking.html${window.location.search || ''}`);
+        window.location.replace(`login.html?next=${next}&reason=track_login_required`);
+        return;
+      }
+
+      if (urlOrder) {
+        document.getElementById('order-id-input').value = urlOrder;
+        searchOrder();
+      }
+    });
 
     // Cart count
     async function updateCartCount() {
@@ -522,6 +542,12 @@
 
     /* ─── Search ─────────────────────────────────────────────────── */
     window.searchOrder = async function() {
+      if (!activeUserEmail) {
+        const next = encodeURIComponent(`tracking.html${window.location.search || ''}`);
+        window.location.replace(`login.html?next=${next}&reason=track_login_required`);
+        return;
+      }
+
       const raw   = document.getElementById('order-id-input').value.trim();
       const ordId = raw.replace('#', '');
       if (!ordId) return;
@@ -534,7 +560,11 @@
       document.getElementById('order-result').style.display = 'none';
 
       try {
-        const q    = query(collection(db, 'orders'), where('id', '==', ordId));
+        const q    = query(
+          collection(db, 'orders'),
+          where('id', '==', ordId),
+          where('email', '==', activeUserEmail)
+        );
         const snap = await getDocs(q);
 
         if (snap.empty) {
