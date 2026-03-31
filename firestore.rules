@@ -152,6 +152,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Admin registry: allow users to check their own admin status
+    match /admins/{email} {
+      allow read: if isSignedIn() && request.auth.token.email == email;
+      allow write: if false; // Only Firebase Console/Admin SDK can manage admins
+    }
+
     // Carts: owner-only access
     match /carts/{cartId} {
       allow read, delete: if isUserCartId(cartId) || (!isSignedIn() && cartId.matches('^guest_[A-Za-z0-9_-]{16,128}$'));
