@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com https://www.googleapis.com; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.firebaseapp.com https://firestore.googleapis.com https://firebaseapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.cloudinary.com https://accounts.google.com https://apis.google.com https://www.googleapis.com https://identitytoolkit.google.com; frame-src 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://accounts.google.com https://apis.google.com; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.gstatic.com https://*.firebaseapp.com https://*.firebaseio.com https://firestore.googleapis.com https://firebaseapis.com https://identitytoolkit.googleapis.com https://identitytoolkit.google.com https://securetoken.googleapis.com https://securetoken.google.com https://api.cloudinary.com https://accounts.google.com https://www.googleapis.com; frame-src 'self';"
         }
       ]
     }
