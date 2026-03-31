@@ -129,8 +129,18 @@
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
+      // Check new system: users/{uid} with adm_acs == 1
       const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists() && Number(snap.data()?.adm_acs) === 1) showMain();
+      if (snap.exists() && Number(snap.data()?.adm_acs) === 1) {
+        showMain();
+        return;
+      }
+
+      // Check old system: admins/{email} for backward compatibility
+      if (user.email) {
+        const adminSnap = await getDoc(doc(db, 'admins', user.email));
+        if (adminSnap.exists()) showMain();
+      }
     }
   });
 
@@ -151,8 +161,19 @@
     btn.disabled = true; btn.textContent = 'Signing in…'; errEl.style.display = 'none';
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Check new system: users/{uid} with adm_acs == 1
       const snap = await getDoc(doc(db, 'users', cred.user.uid));
-      if (!(snap.exists() && Number(snap.data()?.adm_acs) === 1)) throw new Error('Not an admin');
+      const hasNewAdminAccess = snap.exists() && Number(snap.data()?.adm_acs) === 1;
+      
+      // Check old system: admins/{email} for backward compatibility
+      let hasOldAdminAccess = false;
+      if (cred.user.email) {
+        const adminSnap = await getDoc(doc(db, 'admins', cred.user.email));
+        hasOldAdminAccess = adminSnap.exists();
+      }
+      
+      if (!(hasNewAdminAccess || hasOldAdminAccess)) throw new Error('Not an admin');
       showMain();
     } catch(e) {
       errEl.style.display = 'block';

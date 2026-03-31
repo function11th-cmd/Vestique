@@ -43,8 +43,21 @@ async function isAdmin(user) {
   if (!user || !user.uid) return false;
 
   try {
+    // Check new system: users/{uid} with adm_acs == 1
     const userSnap = await getDoc(doc(db, 'users', user.uid));
-    return userSnap.exists() && Number(userSnap.data()?.adm_acs) === 1;
+    if (userSnap.exists() && Number(userSnap.data()?.adm_acs) === 1) {
+      return true;
+    }
+
+    // Check old system: admins/{email} for backward compatibility
+    if (user.email) {
+      const adminSnap = await getDoc(doc(db, 'admins', user.email));
+      if (adminSnap.exists()) {
+        return true;
+      }
+    }
+
+    return false;
   } catch (error) {
     console.error('Failed to verify admin access:', error);
     return false;

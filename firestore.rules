@@ -18,8 +18,11 @@ service cloud.firestore {
       return isSignedIn()
         && request.auth.token.email_verified == true
         && request.auth.uid != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.adm_acs == 1;
+        && (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid))
+           && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.adm_acs == 1)
+          || exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
+        );
     }
 
     function isShortText(value, minLen, maxLen) {

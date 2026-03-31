@@ -282,8 +282,18 @@
       }
 
       try {
+        // Check new system: users/{uid} with adm_acs == 1
         const userSnap = await getDoc(doc(db, 'users', user.uid));
-        const hasAdminAccess = userSnap.exists() && Number(userSnap.data()?.adm_acs) === 1;
+        const hasNewAdminAccess = userSnap.exists() && Number(userSnap.data()?.adm_acs) === 1;
+        
+        // Check old system: admins/{email} for backward compatibility
+        let hasOldAdminAccess = false;
+        if (user.email) {
+          const adminSnap = await getDoc(doc(db, 'admins', user.email));
+          hasOldAdminAccess = adminSnap.exists();
+        }
+
+        const hasAdminAccess = hasNewAdminAccess || hasOldAdminAccess;
         if (!hasAdminAccess) {
           redirectTo('/index.html');
           return;
